@@ -1,5 +1,6 @@
 package backend.academy.bot;
 
+import backend.academy.dto.LinkUpdate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;

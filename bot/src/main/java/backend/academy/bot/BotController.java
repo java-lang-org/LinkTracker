@@ -1,5 +1,7 @@
 package backend.academy.bot;
 
+import backend.academy.dto.ApiErrorResponse;
+import backend.academy.dto.LinkUpdate;
 import jakarta.validation.Valid;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;

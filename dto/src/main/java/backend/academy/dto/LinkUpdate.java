@@ -1,4 +1,4 @@
-package backend.academy.bot;
+package backend.academy.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;

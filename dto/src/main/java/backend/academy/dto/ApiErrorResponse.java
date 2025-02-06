@@ -1,4 +1,4 @@
-package backend.academy.bot;
+package backend.academy.dto;
 
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
