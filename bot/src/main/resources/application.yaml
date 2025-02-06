@@ -1,5 +1,7 @@
 app:
   telegram-token: ${TELEGRAM_TOKEN} # env variable
+  n-threads: 2
+  timeout-in-seconds: 5
 
 spring:
   application:
