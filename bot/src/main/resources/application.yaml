@@ -1,7 +1,6 @@
 app:
-  telegram-token: ${TELEGRAM_TOKEN} # env variable
+  telegram-token: ${TELEGRAM_TOKEN}
   n-threads: 2
-  timeout-in-seconds: 5
 
 spring:
   application:
@@ -20,3 +19,6 @@ springdoc:
   swagger-ui:
     enabled: true
     path: /swagger-ui
+
+scrapper:
+  url: http://scrapper:8081

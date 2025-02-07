@@ -5,21 +5,26 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class UserRepositoryImpl implements UserRepository {
+public class ChatRepositoryImpl implements ChatRepository {
     private final Map<Long, BotState> users;
 
-    public UserRepositoryImpl() {
+    public ChatRepositoryImpl() {
         this.users = new ConcurrentHashMap<>();
     }
 
     @Override
-    public boolean isUserRegistered(long id) {
+    public boolean isChatRegistered(long id) {
         return users.containsKey(id);
     }
 
     @Override
-    public void registerUser(long id) {
+    public void registerChat(long id) {
         users.put(id, BotState.DEFAULT);
+    }
+
+    @Override
+    public void deleteChat(long id) {
+        users.remove(id);
     }
 
     @Override

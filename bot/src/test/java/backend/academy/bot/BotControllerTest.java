@@ -12,14 +12,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import static org.mockito.Mockito.anyLong;
-import static org.mockito.Mockito.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,64 +38,48 @@ class BotControllerTest {
     }
 
     @Test
-    void testUpdates_ValidRequest_ShouldReturnOk() throws Exception {
+    void updates_ValidRequest_ReturnsOk() throws Exception {
         // Arrange
-        LinkUpdate validUpdate = new LinkUpdate(
-            123L, "https://example.com", "Test update", List.of(456L)
+        LinkUpdate linkUpdate = new LinkUpdate(
+            0L, "http://example.com", "updated", List.of(1L, 12L, 123L)
         );
 
-        // Act
-        mockMvc.perform(
-            post("/bot/updates")
+        // Act & Assert
+        mockMvc.perform(post("/updates")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validUpdate))
-        ).andExpect(status().isOk());
+                .content(objectMapper.writeValueAsString(linkUpdate)))
+            .andExpect(status().isOk());
 
-        // Assert
-        verify(botService, times(1)).sendMessage(123L, "Link 'https://example.com' was updated: 'Test update'");
+        verify(botService, times(1)).updates(any());
     }
 
     @Test
-    void updates_InvalidRequest_ShouldReturnBadRequest() throws Exception {
+    void updates_InvalidRequest_ReturnsBadRequest() throws Exception {
         // Arrange
-        String invalidJson = """
-            {
-                "id": 123,
-                "description": "Test update",
-                "tgChatIds": [456]
-            }
-        """;
+        String invalidJson = "{\"id\": 123}"; // Отсутствует обязательное поле
 
-        // Act
-        mockMvc.perform(post("/bot/updates")
+        // Act & Assert
+        mockMvc.perform(post("/updates")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(invalidJson)
-            )
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.description").value("Failed to send message."));
-
-        // Assert
-        verifyNoInteractions(botService);
+                .content(invalidJson))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
-    void updates_ExceptionThrown_ShouldReturnBadRequest() throws Exception {
+    void updates_ServiceThrowsException_ReturnsBadRequest() throws Exception {
         // Arrange
-        LinkUpdate update = new LinkUpdate(123L, "https://example.com", "Test update", List.of(456L));
-
-        // Act
-        doThrow(new RuntimeException("Simulated error")).when(botService).sendMessage(anyLong(), anyString());
-        mockMvc.perform(post("/bot/updates")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(update))
-            )
-            .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.description").value("Failed to send message."));
-
-        // Assert
-        verify(botService, times(1)).sendMessage(
-            123L,
-            "Link 'https://example.com' was updated: 'Test update'"
+        LinkUpdate linkUpdate = new LinkUpdate(
+            0L, "http://example.com", "updated", List.of(1L, 12L, 123L)
         );
+        doThrow(new RuntimeException("Service error")).when(botService).updates(linkUpdate);
+
+        // Act & Assert
+        mockMvc.perform(post("/updates")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(linkUpdate)))
+            .andExpect(status().isBadRequest())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+        verify(botService, times(1)).updates(any());
     }
 }

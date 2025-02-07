@@ -1,23 +1,28 @@
 package backend.academy.bot;
 
-import com.pengrad.telegrambot.model.Chat;
-import com.pengrad.telegrambot.model.Message;
-import com.pengrad.telegrambot.model.Update;
-import org.junit.jupiter.api.BeforeEach;
+import backend.academy.dto.LinkUpdate;
+import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.UpdatesListener;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import static org.mockito.Mockito.mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class BotServiceTest {
-    private final BotConfig botConfig = mock(BotConfig.class);
+    @Mock
+    private TelegramBot telegramBot;
 
     @Mock
-    private UserRepository userRepository;
+    private ExecutorService executorService;
 
     @Mock
     private CommandHandler commandHandler;
@@ -25,48 +30,42 @@ class BotServiceTest {
     @InjectMocks
     private BotService botService;
 
-    @BeforeEach
-    void setUp() {
-        when(botConfig.nThreads()).thenReturn(1);
-        MockitoAnnotations.openMocks(this);
+    @Test
+    void startBot_shouldSetUpdatesListener() {
+        // Arrange
+
+        // Act
+        botService.startBot();
+
+        // Assert
+        verify(
+            telegramBot,
+            times(1)
+        ).setUpdatesListener(any(UpdatesListener.class));
     }
 
     @Test
-    void testProcessUpdate_ValidCommand() {
+    void stopBot_shouldShutdownExecutorService() throws InterruptedException {
         // Arrange
-        long chatId = 789L;
-        String command = "/help";
-
-        Update update = mock(Update.class);
-        Message message = mock(Message.class);
-        Chat chat = mock(Chat.class);
-
-        when(update.message()).thenReturn(message);
-
-        when(message.chat()).thenReturn(chat);
-        when(message.text()).thenReturn(command);
-
-        when(chat.id()).thenReturn(chatId);
-
-        when(userRepository.getState(chatId)).thenReturn(BotState.DEFAULT);
+        when(executorService.awaitTermination(anyLong(), any())).thenReturn(true);
 
         // Act
-        botService.processUpdate(update);
+        botService.stopBot();
 
         // Assert
-        verify(commandHandler).handleCommand(chatId, command);
+        verify(executorService, times(1)).shutdown();
+        verify(executorService, times(1)).awaitTermination(anyLong(), any());
     }
 
     @Test
-    void testProcessUpdate_NullMessage() {
+    void updates_shouldUpdate() {
         // Arrange
-        Update update = mock(Update.class);
-        when(update.message()).thenReturn(null);
+        LinkUpdate linkUpdate = new LinkUpdate(0L, "http://example.com", "updated", List.of(1L, 12L));
 
         // Act
-        botService.processUpdate(update);
+        botService.updates(linkUpdate);
 
         // Assert
-        verifyNoInteractions(userRepository, commandHandler);
+        // TODO:
     }
 }

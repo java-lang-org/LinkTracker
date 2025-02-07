@@ -1,5 +1,6 @@
 package backend.academy.bot;
 
+import backend.academy.dto.LinkUpdate;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
@@ -7,9 +8,9 @@ import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.response.SendResponse;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import java.net.URI;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,59 +19,64 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class BotService {
+    private static final int TIMEOUT_IN_SECONDS = 2;
+    private static final int TELEGRAM_MESSAGE_LIMIT = 4096;
+
     private final TelegramBot bot;
-    private final UserRepository userRepository;
-    private final CommandHandler commandHandler;
     private final ExecutorService executorService;
-    private final int timeoutInSeconds;
+    private final CommandHandler commandHandler;
 
     @Autowired
-    public BotService(BotConfig botConfig, UserRepository userRepository) {
-        this.bot = new TelegramBot(botConfig.telegramToken());
-        this.userRepository = userRepository;
-        this.commandHandler = new CommandHandler(this, userRepository);
-        this.executorService = Executors.newFixedThreadPool(botConfig.nThreads());
-        this.timeoutInSeconds = botConfig.timeoutInSeconds();
-    }
-
-    /**
-     * This is constructor special for tests.
-     */
-    protected BotService(BotConfig botConfig, UserRepository userRepository, CommandHandler commandHandler) {
-        this.bot = new TelegramBot(botConfig.telegramToken());
-        this.userRepository = userRepository;
+    public BotService(TelegramBot bot, ExecutorService executorService, CommandHandler commandHandler) {
+        this.bot = bot;
+        this.executorService = executorService;
         this.commandHandler = commandHandler;
-        this.executorService = Executors.newFixedThreadPool(botConfig.nThreads());
-        this.timeoutInSeconds = botConfig.timeoutInSeconds();
     }
 
     @PostConstruct
     public void startBot() {
-        bot.setUpdatesListener(updates -> {
-            for (Update update : updates) {
-                executorService.submit(() -> processUpdate(update));
-            }
-            return UpdatesListener.CONFIRMED_UPDATES_ALL;
-        });
+        try {
+            bot.setUpdatesListener(
+                updates -> {
+                    for (Update update : updates) {
+                        executorService.submit(() -> processUpdate(update));
+                    }
+                    return UpdatesListener.CONFIRMED_UPDATES_ALL;
+                }
+            );
+        } catch (Exception e) {
+            log.error("Failed to initialize bot updates listener", e);
+        }
     }
 
     @PreDestroy
     public void stopBot() {
+        bot.removeGetUpdatesListener();
         executorService.shutdown();
         try {
-            if (!executorService.awaitTermination(timeoutInSeconds, TimeUnit.SECONDS)) {
+            if (!executorService.awaitTermination(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)) {
                 executorService.shutdownNow();
             }
+            log.info("Bot service has been stopped.");
         } catch (InterruptedException e) {
             executorService.shutdownNow();
             Thread.currentThread().interrupt();
+            log.error("Bot service termination was interrupted.");
         }
     }
 
-    protected void processUpdate(Update update) {
+    public void updates(LinkUpdate linkUpdate) {
+        // TODO
+    }
+
+    private void processUpdate(Update update) {
         try {
-            if (update.message() == null || update.message().text() == null) {
-                log.warn("Received an update without a message: {}", update);
+            if (update.message() == null) {
+                return;
+            }
+
+            if (update.message().text() == null) {
+                log.info("Received a non-text message from chat {}. Ignoring.", update.message().chat().id());
                 return;
             }
 
@@ -78,54 +84,49 @@ public class BotService {
             String receivedText = update.message().text().trim();
             log.info("Processing message from {}: {}", chatId, receivedText);
 
-            switch (userRepository.getState(chatId)) {
-                case WAITING_FOR_TRACK_URL -> handleTrackUrl(chatId, receivedText);
-                case WAITING_FOR_UNTRACK_URL -> handleUntrackUrl(chatId, receivedText);
-                default -> commandHandler.handleCommand(chatId, receivedText);
-            }
+            String response = commandHandler.handle(chatId, receivedText);
+            sendMessage(chatId, response);
         } catch (Exception e) {
             log.error("Error processing update: {}", update, e);
         }
     }
 
-    private void handleTrackUrl(long chatId, String url) {
-        if (!isValidUrl(url)) {
-            sendMessage(chatId, "Invalid URL. Please enter a valid link.");
-            return;
-        }
-
-        userRepository.setState(chatId, BotState.DEFAULT);
-        sendMessage(chatId, "Link '" + url + "' added for tracking!");
-    }
-
-    private void handleUntrackUrl(long chatId, String url) {
-        if (!isValidUrl(url)) {
-            sendMessage(chatId, "Invalid URL. Please enter a valid link.");
-            return;
-        }
-
-        userRepository.setState(chatId, BotState.DEFAULT);
-        sendMessage(chatId, "Link '" + url + "' untracked!");
-    }
-
-    private boolean isValidUrl(String url) {
-        try {
-            URI.create(url).toURL();
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    protected void sendMessage(long chatId, String text) {
-        SendMessage request = new SendMessage(chatId, text);
-        try {
-            SendResponse response = bot.execute(request);
-            if (!response.isOk()) {
-                log.error("Error sending message: {}", response.description());
+    private void sendMessage(long chatId, String message) {
+        for (String part : splitMessage(message)) {
+            SendMessage request = new SendMessage(chatId, part);
+            try {
+                SendResponse response = bot.execute(request);
+                if (!response.isOk()) {
+                    log.warn("Warning sending message: {}", response.description());
+                }
+            } catch (Exception e) {
+                log.error("Error while sending message", e);
             }
-        } catch (Exception e) {
-            log.error("Exception while sending message", e);
         }
+    }
+
+    private List<String> splitMessage(String message) {
+        List<String> parts = new LinkedList<>();
+        while (message.length() > TELEGRAM_MESSAGE_LIMIT) {
+            int splitIndex = calculateSplitIndex(message);
+            parts.add(message.substring(0, splitIndex).trim());
+            message = message.substring(splitIndex).trim();
+        }
+        parts.add(message);
+        return parts;
+    }
+
+    private int calculateSplitIndex(String message) {
+        int splitIndex = message.lastIndexOf('\n', TELEGRAM_MESSAGE_LIMIT);
+        if (splitIndex != -1) {
+            return splitIndex;
+        }
+
+        splitIndex = message.lastIndexOf(' ', TELEGRAM_MESSAGE_LIMIT);
+        if (splitIndex != -1) {
+            return splitIndex;
+        }
+
+        return TELEGRAM_MESSAGE_LIMIT;
     }
 }

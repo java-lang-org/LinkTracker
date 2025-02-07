@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/bot")
+@RequestMapping("/")
 @Slf4j
 public class BotController {
+    private static final int STACK_TRACE_MAX_SIZE = 10;
+
     private final BotService botService;
 
     public BotController(BotService botService) {
@@ -30,13 +32,8 @@ public class BotController {
         produces = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<Void> updates(@Valid @RequestBody LinkUpdate linkUpdate) {
+        botService.updates(linkUpdate);
         log.info("Link update: {}", linkUpdate);
-
-        botService.sendMessage(
-            linkUpdate.id(),
-            String.format("Link '%s' was updated: '%s'", linkUpdate.url(), linkUpdate.description())
-        );
-
         return ResponseEntity.ok().build();
     }
 
@@ -49,7 +46,10 @@ public class BotController {
                 HttpStatus.BAD_REQUEST.toString(),
                 e.getClass().getSimpleName(),
                 e.getMessage(),
-                Arrays.stream(e.getStackTrace()).map(StackTraceElement::toString).toList()
+                Arrays.stream(e.getStackTrace())
+                    .limit(STACK_TRACE_MAX_SIZE)
+                    .map(StackTraceElement::toString)
+                    .toList()
             )
         );
     }
