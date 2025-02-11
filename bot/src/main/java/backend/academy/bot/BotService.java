@@ -66,7 +66,10 @@ public class BotService {
     }
 
     public void updates(LinkUpdate linkUpdate) {
-        // TODO
+        String message = "Link '" + linkUpdate.url() + "' was updated: " + linkUpdate.description();
+        for (long chatId : linkUpdate.tgChatIds()) {
+            sendMessage(chatId, message);
+        }
     }
 
     private void processUpdate(Update update) {

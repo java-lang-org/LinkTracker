@@ -13,11 +13,6 @@ public class ChatRepositoryImpl implements ChatRepository {
     }
 
     @Override
-    public boolean isChatRegistered(long id) {
-        return users.containsKey(id);
-    }
-
-    @Override
     public void registerChat(long id) {
         users.put(id, BotState.DEFAULT);
     }

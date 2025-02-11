@@ -3,18 +3,19 @@ package backend.academy.bot;
 import backend.academy.dto.ApiErrorResponse;
 import backend.academy.dto.LinkResponse;
 import backend.academy.dto.ListLinksResponse;
-import java.net.URI;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class CommandHandler {
     private final ChatRepository chatRepository;
-    private final ScrapperService scrapperService;
+    private final ScrapperClient scrapperClient;
 
     public String handle(long chatId, String receivedText) {
         return switch (chatRepository.getState(chatId)) {
@@ -25,49 +26,26 @@ public class CommandHandler {
     }
 
     private String handleTrackUrl(long chatId, String url) {
-        return handleLinkTracking(
-            chatId,
-            url,
-            uri -> scrapperService.addLinkTracking(chatId, uri),
-            "Link '%s' is tracked!"
-        );
+        ResponseEntity<?> response = scrapperClient.addLinkTracking(chatId, url);
+        chatRepository.setState(chatId, BotState.DEFAULT);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return "Link '" + url + "' is tracked!";
+        } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST) {
+            return ((ApiErrorResponse) response.getBody()).description();
+        } else {
+            return handleUnexpectedResponse(response);
+        }
     }
 
     private String handleUntrackUrl(long chatId, String url) {
-        return handleLinkTracking(
-            chatId,
-            url,
-            uri -> scrapperService.removeLinkTracking(chatId, uri),
-            "Link '%s' isn't tracked!"
-        );
-
-    }
-
-    private String handleLinkTracking(
-        long chatId,
-        String url,
-        Function<String, ResponseEntity<LinkResponse>> action,
-        String successMessage
-    ) {
-        if (!isValidUrl(url)) {
-            return "Invalid URL. Please enter a valid link.";
-        }
-
-        ResponseEntity<LinkResponse> response = action.apply(url);
-        if (response.getStatusCode().is2xxSuccessful()) {
-            chatRepository.setState(chatId, BotState.DEFAULT);
-            return successMessage.formatted(url);
+        ResponseEntity<?> response = scrapperClient.removeLinkTracking(chatId, url);
+        chatRepository.setState(chatId, BotState.DEFAULT);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return "Link '" + url + "' isn't tracked!";
+        } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST || response.getStatusCode() == HttpStatus.NOT_FOUND) {
+            return ((ApiErrorResponse) response.getBody()).description();
         } else {
-            return "Something went wrong: " + response.getBody();
-        }
-    }
-
-    private boolean isValidUrl(String url) {
-        try {
-            URI.create(url).toURL();
-            return true;
-        } catch (Exception e) {
-            return false;
+            return handleUnexpectedResponse(response);
         }
     }
 
@@ -79,89 +57,75 @@ public class CommandHandler {
             case "/untrack" -> handleUntrackCommand(chatId);
             case "/list" -> handleListCommand(chatId);
             case "/help" -> getHelpMessage();
-            default -> "Unknown command. Type /help for a list of available commands.";
+            default -> """
+                Unknown command.
+                Use /help for more information.
+                """;
         };
     }
 
     private String handleStartCommand(long chatId) {
-        if (chatRepository.isChatRegistered(chatId)) {
-            return "You are already registered. Type /help for a list of commands.";
+        ResponseEntity<?> response = scrapperClient.registerChat(chatId);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            chatRepository.registerChat(chatId);
+            return """
+                Welcome!
+                You have successfully registered.
+                Use /help for more information.
+                """;
+        } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST) {
+            return ((ApiErrorResponse) response.getBody()).description();
         } else {
-            ResponseEntity<ApiErrorResponse> response = scrapperService.registerChat(chatId);
-            if (response.getStatusCode().is2xxSuccessful()) {
-                chatRepository.registerChat(chatId);
-                return "Welcome! You have successfully registered. Type /help for a list of commands.";
-            } else {
-                return "Something went wrong: " + response.getBody();
-            }
+            return handleUnexpectedResponse(response);
         }
     }
 
     private String handleEndCommand(long chatId) {
-        if (chatRepository.isChatRegistered(chatId)) {
-            ResponseEntity<ApiErrorResponse> response = scrapperService.deleteChat(chatId);
-            if (response.getStatusCode().is2xxSuccessful()) {
-                chatRepository.deleteChat(chatId);
-                return "Bye! You have successfully unregistered.";
-            } else {
-                return "Something went wrong: " + response.getBody();
-            }
+        ResponseEntity<?> response = scrapperClient.deleteChat(chatId);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            chatRepository.deleteChat(chatId);
+            return "Bye! You have successfully unregistered.";
+        } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST || response.getBody() == HttpStatus.NOT_FOUND) {
+            return ((ApiErrorResponse) response.getBody()).description();
         } else {
-            return "You are not registered yet.";
+            return handleUnexpectedResponse(response);
         }
     }
 
     private String handleTrackCommand(long chatId) {
-        return handleStateChangingCommand(
-            chatId,
-            BotState.WAITING_FOR_TRACK_URL,
-            "Enter the link you want to track:"
-        );
+        return handleStateChangingCommand(chatId, BotState.WAITING_FOR_TRACK_URL);
     }
 
     private String handleUntrackCommand(long chatId) {
-        return handleStateChangingCommand(
-            chatId,
-            BotState.WAITING_FOR_UNTRACK_URL,
-            "Enter the link you want to untrack:"
-        );
+        return handleStateChangingCommand(chatId, BotState.WAITING_FOR_UNTRACK_URL);
     }
 
-    private String handleStateChangingCommand(long chatId, BotState state, String message) {
-        if (!isChatRegistered(chatId)) {
-            return "To use this command you must be registered.";
-        }
+    private String handleStateChangingCommand(long chatId, BotState state) {
         chatRepository.setState(chatId, state);
-        return message;
+        return "Enter link:";
     }
 
     private String handleListCommand(long chatId) {
-        if (!isChatRegistered(chatId)) {
-            return "To use this command you must be registered.";
+        ResponseEntity<?> response = scrapperClient.getLinks(chatId);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            ListLinksResponse listLinksResponse = (ListLinksResponse) response.getBody();
+
+            if (listLinksResponse.links().isEmpty()) {
+                return "No tracked links.";
+            }
+
+            return listLinksResponse.links().stream()
+                .map(LinkResponse::url)
+                .collect(Collectors.joining("\n"));
+        } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST) {
+            return ((ApiErrorResponse) response.getBody()).description();
+        } else {
+            return handleUnexpectedResponse(response);
         }
-
-        ResponseEntity<ListLinksResponse> response = scrapperService.getLinks(chatId);
-        if (!response.getStatusCode().is2xxSuccessful()) {
-            return "Something went wrong: " + response.getBody();
-        }
-
-        ListLinksResponse listLinksResponse = response.getBody();
-        if (listLinksResponse.links().isEmpty()) {
-            return "No tracked links found.";
-        }
-
-        return listLinksResponse.links().stream()
-            .map(LinkResponse::toString)
-            .collect(Collectors.joining("\n"));
-    }
-
-    private boolean isChatRegistered(long chatId) {
-        return chatRepository.isChatRegistered(chatId);
     }
 
     private String getHelpMessage() {
         return """
-            Available commands:
             /start - register chat
             /end - delete chat
             /track - track a link
@@ -169,5 +133,14 @@ public class CommandHandler {
             /list - show list of tracked links
             /help - list of commands
             """;
+    }
+
+    private String handleUnexpectedResponse(ResponseEntity<?> response) {
+        log.error(
+            "Unexpected error while processing request: Status = {}, Body = {}",
+            response.getStatusCode(),
+            response.getBody()
+        );
+        return "Oops, something went wrong!";
     }
 }

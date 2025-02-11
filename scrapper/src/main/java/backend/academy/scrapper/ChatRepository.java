@@ -1,18 +1,9 @@
 package backend.academy.scrapper;
 
-import backend.academy.dto.AddLinkRequest;
-import backend.academy.dto.LinkResponse;
-import backend.academy.dto.RemoveLinkRequest;
-import java.util.List;
-
 public interface ChatRepository {
-    void registerChat(long id);
+    void registerChat(long chatId);
 
-    void deleteChat(long id);
+    void deleteChat(long chatId);
 
-    List<LinkResponse> getLinks(long tgChatId);
-
-    LinkResponse addLink(long tgChatId, AddLinkRequest addLinkRequest);
-
-    LinkResponse removeLink(long tgChatId, RemoveLinkRequest removeLinkRequest);
+    boolean exists(long chatId);
 }

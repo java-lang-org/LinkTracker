@@ -10,3 +10,5 @@ services:
     build: ./scrapper
     ports:
       - "8081:8081"
+    environment:
+      GITHUB_TOKEN: $GITHUB_TOKEN

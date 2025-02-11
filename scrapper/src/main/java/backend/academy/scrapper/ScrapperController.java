@@ -20,11 +20,11 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -32,29 +32,31 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/")
 @Slf4j
 public class ScrapperController {
-    private final ChatRepository chatRepository;
+    private static final int STACK_TRACE_MAX_SIZE = 10;
+
+    private final ChatService chatService;
     private final ObjectMapper objectMapper;
 
-    public ScrapperController(ChatRepository chatRepository, ObjectMapper objectMapper) {
-        this.chatRepository = chatRepository;
+    public ScrapperController(ChatService chatService, ObjectMapper objectMapper) {
+        this.chatService = chatService;
         this.objectMapper = objectMapper;
     }
 
-    @PostMapping(path = "/tg-chat", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> registerChat(@RequestParam long id) {
-        chatRepository.registerChat(id);
+    @PostMapping(path = "/tg-chat/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> registerChat(@PathVariable long id) {
+        chatService.registerChat(id);
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping(path = "/tg-chat", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> deleteChat(@RequestParam long id) {
-        chatRepository.deleteChat(id);
+    @DeleteMapping(path = "/tg-chat/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> deleteChat(@PathVariable long id) {
+        chatService.deleteChat(id);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping(path = "/links", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ListLinksResponse> getLinks(@RequestHeader("Tg-Chat-Id") long tgChatId) {
-        List<LinkResponse> links = chatRepository.getLinks(tgChatId);
+        List<LinkResponse> links = chatService.getLinks(tgChatId);
         int size = calculateJsonSize(links);
         return ResponseEntity.ok().body(new ListLinksResponse(links, size));
     }
@@ -68,7 +70,8 @@ public class ScrapperController {
         @RequestHeader("Tg-Chat-Id") long tgChatId,
         @Valid @RequestBody AddLinkRequest addLinkRequest
     ) {
-        LinkResponse linkResponse = chatRepository.addLink(tgChatId, addLinkRequest);
+        Link link = Link.parse(addLinkRequest);
+        LinkResponse linkResponse = chatService.addLink(tgChatId, link);
         return ResponseEntity.ok().body(linkResponse);
     }
 
@@ -80,7 +83,7 @@ public class ScrapperController {
     public ResponseEntity<LinkResponse> removeLinkTracking(
         @RequestHeader("Tg-Chat-Id") long tgChatId,
         @Valid @RequestBody RemoveLinkRequest removeLinkRequest) {
-        LinkResponse linkResponse = chatRepository.removeLink(tgChatId, removeLinkRequest);
+        LinkResponse linkResponse = chatService.removeLink(tgChatId, removeLinkRequest.uri());
         return ResponseEntity.ok().body(linkResponse);
     }
 
@@ -102,18 +105,18 @@ public class ScrapperController {
         );
     }
 
-    @ExceptionHandler({
-        ChatDoesNotExistException.class,
-        IncorrectRequestParametersException.class
-    })
-    public ResponseEntity<ApiErrorResponse> handleChatNotFound(ResponseStatusException e) {
+    @ExceptionHandler({ChatException.class, InvalidRequestException.class})
+    public ResponseEntity<ApiErrorResponse> handleInternalExceptions(ResponseStatusException e) {
         return ResponseEntity.status(e.getStatusCode()).body(
             new ApiErrorResponse(
                 e.getReason(),
                 String.valueOf(e.getStatusCode().value()),
                 e.getClass().getSimpleName(),
                 e.getMessage(),
-                Arrays.stream(e.getStackTrace()).map(StackTraceElement::toString).toList()
+                Arrays.stream(e.getStackTrace())
+                    .limit(STACK_TRACE_MAX_SIZE)
+                    .map(StackTraceElement::toString)
+                    .toList()
             )
         );
     }
