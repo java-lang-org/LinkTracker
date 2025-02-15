@@ -3,12 +3,16 @@ package backend.academy.bot;
 import backend.academy.dto.ApiErrorResponse;
 import backend.academy.dto.LinkResponse;
 import backend.academy.dto.ListLinksResponse;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import static backend.academy.bot.BotStateType.WAITING_TRACKED_URL;
+import static backend.academy.bot.BotStateType.WAITING_UNTRACKED_URL;
 
 @Component
 @RequiredArgsConstructor
@@ -18,18 +22,44 @@ public class CommandHandler {
     private final ScrapperClient scrapperClient;
 
     public String handle(long chatId, String receivedText) {
-        return switch (chatRepository.getState(chatId)) {
-            case WAITING_FOR_TRACK_URL -> handleTrackUrl(chatId, receivedText);
-            case WAITING_FOR_UNTRACK_URL -> handleUntrackUrl(chatId, receivedText);
+        return switch (chatRepository.getState(chatId).botStateType()) {
+            case WAITING_TRACKED_URL -> handleTrackedUrl(chatId, receivedText);
+            case WAITING_TAGS -> handleTags(chatId, receivedText);
+            case WAITING_FILTER -> handleFilters(chatId, receivedText);
+            case WAITING_UNTRACKED_URL -> handleUntrackedUrl(chatId, receivedText);
             default -> handleCommand(chatId, receivedText);
         };
     }
 
-    private String handleTrackUrl(long chatId, String url) {
-        ResponseEntity<?> response = scrapperClient.addLinkTracking(chatId, url);
-        chatRepository.setState(chatId, BotState.DEFAULT);
+    private String handleTrackedUrl(long chatId, String url) {
+        chatRepository.setUrl(chatId, url);
+        return "Enter tags separated by spaces otherwise '-':";
+    }
+
+    private String handleTags(long chatId, String tags) {
+        if (tags.equals("-")) {
+            chatRepository.setTags(chatId, List.of());
+        } else {
+            chatRepository.setTags(chatId, Arrays.stream(tags.split(" ")).toList());
+        }
+        return "Enter filters in format key:value separated by spaces otherwise '-':";
+    }
+
+    private String handleFilters(long chatId, String filters) {
+        if (filters.equals("-")) {
+            chatRepository.setFilters(chatId, List.of());
+        } else {
+            chatRepository.setFilters(chatId, Arrays.stream(filters.split(" ")).toList());
+        }
+        return handleTrack(chatId);
+    }
+
+    private String handleTrack(long chatId) {
+        BotState botState = chatRepository.getState(chatId);
+        ResponseEntity<?> response = scrapperClient.addLinkTracking(chatId, botState);
+        chatRepository.setDefault(chatId);
         if (response.getStatusCode() == HttpStatus.OK) {
-            return "Link '" + url + "' is tracked!";
+            return "Link is tracked!";
         } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST) {
             return ((ApiErrorResponse) response.getBody()).description();
         } else {
@@ -37,11 +67,11 @@ public class CommandHandler {
         }
     }
 
-    private String handleUntrackUrl(long chatId, String url) {
+    private String handleUntrackedUrl(long chatId, String url) {
         ResponseEntity<?> response = scrapperClient.removeLinkTracking(chatId, url);
-        chatRepository.setState(chatId, BotState.DEFAULT);
+        chatRepository.setDefault(chatId);
         if (response.getStatusCode() == HttpStatus.OK) {
-            return "Link '" + url + "' isn't tracked!";
+            return "Link is untracked!";
         } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST || response.getStatusCode() == HttpStatus.NOT_FOUND) {
             return ((ApiErrorResponse) response.getBody()).description();
         } else {
@@ -85,7 +115,8 @@ public class CommandHandler {
         if (response.getStatusCode() == HttpStatus.OK) {
             chatRepository.deleteChat(chatId);
             return "Bye! You have successfully unregistered.";
-        } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST || response.getBody() == HttpStatus.NOT_FOUND) {
+        } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST ||
+            response.getStatusCode() == HttpStatus.NOT_FOUND) {
             return ((ApiErrorResponse) response.getBody()).description();
         } else {
             return handleUnexpectedResponse(response);
@@ -93,15 +124,15 @@ public class CommandHandler {
     }
 
     private String handleTrackCommand(long chatId) {
-        return handleStateChangingCommand(chatId, BotState.WAITING_FOR_TRACK_URL);
+        return handleStateChangingCommand(chatId, WAITING_TRACKED_URL);
     }
 
     private String handleUntrackCommand(long chatId) {
-        return handleStateChangingCommand(chatId, BotState.WAITING_FOR_UNTRACK_URL);
+        return handleStateChangingCommand(chatId, WAITING_UNTRACKED_URL);
     }
 
-    private String handleStateChangingCommand(long chatId, BotState state) {
-        chatRepository.setState(chatId, state);
+    private String handleStateChangingCommand(long chatId, BotStateType state) {
+        chatRepository.setBotStateType(chatId, state);
         return "Enter link:";
     }
 
@@ -115,7 +146,7 @@ public class CommandHandler {
             }
 
             return listLinksResponse.links().stream()
-                .map(LinkResponse::url)
+                .map(LinkResponse::toString)
                 .collect(Collectors.joining("\n"));
         } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST) {
             return ((ApiErrorResponse) response.getBody()).description();

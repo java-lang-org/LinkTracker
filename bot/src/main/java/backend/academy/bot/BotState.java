@@ -1,7 +1,25 @@
 package backend.academy.bot;
 
-public enum BotState {
-    DEFAULT,
-    WAITING_FOR_TRACK_URL,
-    WAITING_FOR_UNTRACK_URL
+import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class BotState {
+    private BotStateType botStateType;
+    private String url;
+    private List<String> tags;
+    private List<String> filters;
+
+    private BotState(BotStateType botStateType, String url, List<String> tags, List<String> filters) {
+        this.botStateType = botStateType;
+        this.url = url;
+        this.tags = tags;
+        this.filters = filters;
+    }
+
+    public static BotState getInstance() {
+        return new BotState(BotStateType.DEFAULT, "", List.of(), List.of());
+    }
 }

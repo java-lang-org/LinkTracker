@@ -1,11 +1,21 @@
 package backend.academy.bot;
 
+import java.util.List;
+
 public interface ChatRepository {
     void registerChat(long id);
 
     void deleteChat(long id);
 
-    BotState getState(long id);
+    void setDefault(long id);
 
-    void setState(long id, BotState botState);
+    void setBotStateType(long id, BotStateType botStateType);
+
+    void setUrl(long id, String url);
+
+    void setTags(long id, List<String> tags);
+
+    void setFilters(long id, List<String> filters);
+
+    BotState getState(long id);
 }

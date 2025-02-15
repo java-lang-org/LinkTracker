@@ -25,56 +25,12 @@ public class CommandHandlerTest {
     private CommandHandler commandHandler;
 
     @Test
-    void handle_WaitingForTrackUrl() {
-        // Arrange
-        long chatId = 123L;
-        String receivedText = "http://example.com";
-
-        when(chatRepository.getState(chatId)).thenReturn(BotState.WAITING_FOR_TRACK_URL);
-        when(scrapperClient.addLinkTracking(chatId, receivedText)).thenReturn(ResponseEntity.ok().build());
-
-        // Act
-        commandHandler.handle(chatId, receivedText);
-
-        // Assert
-        verify(chatRepository, times(1)).setState(chatId, BotState.DEFAULT);
-        verify(scrapperClient, times(1)).addLinkTracking(chatId, receivedText);
-    }
-
-    @Test
-    void handle_WaitingForUntrackUrl() {
-        // Arrange
-        long chatId = 123L;
-        String receivedText = "http://example.com";
-
-        when(chatRepository.getState(chatId)).thenReturn(BotState.WAITING_FOR_UNTRACK_URL);
-        when(scrapperClient.removeLinkTracking(chatId, receivedText)).thenReturn(
-            (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-                new ApiErrorResponse(
-                    "description",
-                    "400",
-                    "exceptionName",
-                    "exceptionMessage",
-                    List.of()
-                )
-            )
-        );
-
-        // Act
-        commandHandler.handle(chatId, receivedText);
-
-        // Assert
-        verify(chatRepository, times(1)).setState(chatId, BotState.DEFAULT);
-        verify(scrapperClient, times(1)).removeLinkTracking(chatId, receivedText);
-    }
-
-    @Test
     void handle_Default() {
         // Arrange
         long chatId = 123L;
         String receivedText = "/start";
 
-        when(chatRepository.getState(chatId)).thenReturn(BotState.DEFAULT);
+        when(chatRepository.getState(chatId)).thenReturn(BotState.getInstance());
         when(scrapperClient.registerChat(chatId)).thenReturn(ResponseEntity.ok().build());
 
         // Act

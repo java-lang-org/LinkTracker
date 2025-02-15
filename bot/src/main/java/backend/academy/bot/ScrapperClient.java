@@ -5,7 +5,6 @@ import backend.academy.dto.ApiErrorResponse;
 import backend.academy.dto.LinkResponse;
 import backend.academy.dto.ListLinksResponse;
 import backend.academy.dto.RemoveLinkRequest;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -65,13 +64,13 @@ public class ScrapperClient {
         }
     }
 
-    public ResponseEntity<?> addLinkTracking(long chatId, String uri) {
+    public ResponseEntity<?> addLinkTracking(long chatId, BotState botState) {
         try {
             return restClient.post()
                 .uri(scrapperUrl + "/links")
                 .contentType(MediaType.APPLICATION_JSON)
                 .headers(headers -> headers.addAll(headersWithChatId(chatId)))
-                .body(new AddLinkRequest(uri, List.of(), List.of()))
+                .body(new AddLinkRequest(botState.url(), botState.tags(), botState.filters()))
                 .retrieve()
                 .toEntity(LinkResponse.class);
         } catch (Exception e) {
