@@ -22,5 +22,8 @@ springdoc:
     enabled: true
     path: /swagger-ui
 
+github:
+  base-url: https://api.github.com
+
 bot:
   url: http://bot:8080

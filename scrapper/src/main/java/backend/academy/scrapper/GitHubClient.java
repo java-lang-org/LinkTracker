@@ -1,14 +1,16 @@
 package backend.academy.scrapper;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 @Service
 public class GitHubClient {
-    private static final String GITHUB_API_URL = "https://api.github.com/repos/{owner}/{repo}";
-
     private final RestClient restClient;
+
+    @Value("${github.base-url:https://api.github.com}")
+    private String gitHubBaseUrl;
 
     public GitHubClient(@Qualifier("gitHubRestClient") RestClient restClient) {
         this.restClient = restClient;
@@ -17,7 +19,7 @@ public class GitHubClient {
     public boolean hasRepositoryUpdated(Link link) {
         String[] parts = link.uri().getPath().split("/");
         GitHubRepoInfo repoInfo = restClient.get()
-            .uri(GITHUB_API_URL, parts[1], parts[2])
+            .uri(gitHubBaseUrl + "/repos/{owner}/{repo}", parts[1], parts[2])
             .retrieve()
             .body(GitHubRepoInfo.class);
 
