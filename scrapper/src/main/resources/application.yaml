@@ -25,5 +25,8 @@ springdoc:
 github:
   base-url: https://api.github.com
 
+stackoverflow:
+  base-url: https://api.stackexchange.com/2.3
+
 bot:
   url: http://bot:8080

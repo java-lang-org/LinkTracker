@@ -5,7 +5,6 @@ import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -20,24 +19,21 @@ public class Link {
     private ZonedDateTime lastUpdate;
 
     public static Link parse(AddLinkRequest addLinkRequest) {
-        Optional<URI> uri = GitHubUriValidator.isValidGitHubUrl(addLinkRequest.uri());
-        if (uri.isPresent()) {
-            return new Link(
-                uri.get(),
-                addLinkRequest.tags(),
-                addLinkRequest.filters(),
-                LinkType.GITHUB,
-                ZonedDateTime.now()
-            );
-        }
-
-        throw new InvalidRequestException("Invalid link: " + addLinkRequest.uri());
+        String url = addLinkRequest.url();
+        List<String> tags = addLinkRequest.tags();
+        List<String> filters = addLinkRequest.filters();
+        ZonedDateTime now = ZonedDateTime.now();
+        return UrlValidator.isValidGitHubUrl(url)
+                .map(uri -> new Link(uri, tags, filters, LinkType.GITHUB, now))
+                .or(() -> UrlValidator.isValidStackOverflowUrl(url)
+                        .map(uri -> new Link(uri, tags, filters, LinkType.STACK_OVERFLOW, now)))
+                .orElseThrow(() -> new InvalidRequestException("Invalid link: " + url));
     }
 
     private Link(URI uri, List<String> tags, List<String> filters, LinkType linkType, ZonedDateTime lastUpdate) {
         this.uri = uri;
-        this.tags = tags;
-        this.filters = filters;
+        this.tags = List.copyOf(tags);
+        this.filters = List.copyOf(filters);
         this.linkType = linkType;
         this.lastUpdate = lastUpdate;
     }

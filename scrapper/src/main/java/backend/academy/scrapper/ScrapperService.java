@@ -10,18 +10,22 @@ import org.springframework.stereotype.Service;
 public class ScrapperService {
     private final ChatService chatService;
     private final GitHubClient gitHubClient;
+    private final StackOverflowClient stackOverflowClient;
     private final BotClient botClient;
 
     public ScrapperService(
         ChatService chatService,
         GitHubClient gitHubClient,
-        BotClient botClient) {
+        StackOverflowClient stackOverflowClient,
+        BotClient botClient
+    ) {
         this.chatService = chatService;
         this.gitHubClient = gitHubClient;
+        this.stackOverflowClient = stackOverflowClient;
         this.botClient = botClient;
     }
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 3_600_000) // 1 hour
     public void checkUpdates() {
         chatService.getLink2ChatIds().forEach(
             chatLink -> {
@@ -30,11 +34,13 @@ public class ScrapperService {
                 switch (link.linkType()) {
                     case GITHUB -> {
                         if (gitHubClient.hasRepositoryUpdated(link)) {
-                            botClient.updates(link, "Updated", chatIds);
+                            botClient.updates(link, "...", chatIds);
                         }
                     }
                     case STACK_OVERFLOW -> {
-                        // TODO:
+                        if (stackOverflowClient.hasRepositoryUpdated(link)) {
+                            botClient.updates(link, "...", chatIds);
+                        }
                     }
                 }
             }

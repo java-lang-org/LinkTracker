@@ -5,19 +5,13 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 @Getter
-@Setter
-@NoArgsConstructor
 @AllArgsConstructor
-@ToString
 public class AddLinkRequest {
     @NotNull(message = "uri cannot be null")
     @JsonProperty("uri")
-    private String uri;
+    private String url;
 
     @NotNull(message = "tags cannot be null")
     @JsonProperty("tags")

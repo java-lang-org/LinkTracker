@@ -27,6 +27,7 @@ public class GitHubClient {
             link.lastUpdate(repoInfo.updatedAt());
             return true;
         }
+
         return false;
     }
 }

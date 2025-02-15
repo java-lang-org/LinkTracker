@@ -20,6 +20,11 @@ public class ScrapperConfiguration {
             .build();
     }
 
+    @Bean(name = "stackOverflowRestClient")
+    public RestClient stackOverflowClient() {
+        return RestClient.builder().build();
+    }
+
     @Bean(name = "botRestClient")
     public RestClient botRestClient() {
         return RestClient.builder().build();
