@@ -97,7 +97,6 @@ public class CommandHandler {
     private String handleStartCommand(long chatId) {
         ResponseEntity<?> response = scrapperClient.registerChat(chatId);
         if (response.getStatusCode() == HttpStatus.OK) {
-            chatRepository.registerChat(chatId);
             return """
                 Welcome!
                 You have successfully registered.
@@ -113,7 +112,6 @@ public class CommandHandler {
     private String handleEndCommand(long chatId) {
         ResponseEntity<?> response = scrapperClient.deleteChat(chatId);
         if (response.getStatusCode() == HttpStatus.OK) {
-            chatRepository.deleteChat(chatId);
             return "Bye! You have successfully unregistered.";
         } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST ||
             response.getStatusCode() == HttpStatus.NOT_FOUND) {

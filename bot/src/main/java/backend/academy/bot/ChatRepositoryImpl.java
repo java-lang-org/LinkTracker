@@ -15,67 +15,35 @@ public class ChatRepositoryImpl implements ChatRepository {
     }
 
     @Override
-    public void registerChat(long id) {
-        users.put(id, BotState.getInstance());
-    }
-
-    @Override
-    public void deleteChat(long id) {
+    public void setDefault(long id) {
         users.remove(id);
     }
 
     @Override
-    public void setDefault(long id) {
-        if (users.containsKey(id)) {
-            users.put(id, BotState.getInstance());
-        }
-    }
-
-    @Override
     public void setBotStateType(long id, BotStateType botStateType) {
-        users.computeIfPresent(
-            id,
-            (_, botState) -> {
-                botState.botStateType(botStateType);
-                return botState;
-            }
-        );
+        users.computeIfAbsent(id, _ -> BotState.getInstance())
+            .botStateType(botStateType);
     }
 
     @Override
     public void setUrl(long id, String url) {
-        users.computeIfPresent(
-            id,
-            (_, botState) -> {
-                botState.botStateType(BotStateType.WAITING_TAGS);
-                botState.url(url);
-                return botState;
-            }
-        );
+        users.computeIfAbsent(id, _ -> BotState.getInstance())
+            .url(url)
+            .botStateType(BotStateType.WAITING_TAGS);
     }
 
     @Override
     public void setTags(long id, List<String> tags) {
-        users.computeIfPresent(
-            id,
-            (_, botState) -> {
-                botState.botStateType(BotStateType.WAITING_FILTER);
-                botState.tags(new ArrayList<>(tags));
-                return botState;
-            }
-        );
+        users.computeIfAbsent(id, _ -> BotState.getInstance())
+            .tags(new ArrayList<>(tags))
+            .botStateType(BotStateType.WAITING_FILTER);
     }
 
     @Override
     public void setFilters(long id, List<String> filters) {
-        users.computeIfPresent(
-            id,
-            (_, botState) -> {
-                botState.botStateType(BotStateType.DEFAULT);
-                botState.filters(new ArrayList<>(filters));
-                return botState;
-            }
-        );
+        users.computeIfAbsent(id, _ -> BotState.getInstance())
+            .filters(new ArrayList<>(filters))
+            .botStateType(BotStateType.DEFAULT);
     }
 
     @Override

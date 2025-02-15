@@ -1,13 +1,10 @@
 package backend.academy.bot;
 
-import backend.academy.dto.ApiErrorResponse;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -39,6 +36,5 @@ public class CommandHandlerTest {
         // Assert
         verify(chatRepository, times(1)).getState(chatId);
         verify(scrapperClient, times(1)).registerChat(chatId);
-        verify(chatRepository, times(1)).registerChat(chatId);
     }
 }

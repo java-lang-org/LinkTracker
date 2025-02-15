@@ -3,10 +3,6 @@ package backend.academy.bot;
 import java.util.List;
 
 public interface ChatRepository {
-    void registerChat(long id);
-
-    void deleteChat(long id);
-
     void setDefault(long id);
 
     void setBotStateType(long id, BotStateType botStateType);
