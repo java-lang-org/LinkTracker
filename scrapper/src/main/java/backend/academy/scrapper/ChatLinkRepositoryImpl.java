@@ -20,9 +20,16 @@ public class ChatLinkRepositoryImpl implements ChatLinkRepository {
     }
 
     @Override
-    public void addLink(long chatId, Link link) {
-        chatId2Links.computeIfAbsent(chatId, k -> new HashSet<>()).add(link);
-        link2ChatIds.computeIfAbsent(link, k -> new HashSet<>()).add(chatId);
+    public boolean addLink(long chatId, Link link) {
+        Set<Link> links = chatId2Links.computeIfAbsent(chatId, (_) -> new HashSet<>());
+        if (links.contains(link)) {
+            return false;
+        }
+
+        links.add(link);
+        link2ChatIds.computeIfAbsent(link, (_) -> new HashSet<>()).add(chatId);
+
+        return true;
     }
 
     @Override

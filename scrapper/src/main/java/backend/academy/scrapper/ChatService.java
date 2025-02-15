@@ -36,7 +36,9 @@ public class ChatService {
 
     public LinkResponse addLink(long chatId, Link link) {
         requireChatExist(chatId);
-        chatLinkRepository.addLink(chatId, link);
+        if (!chatLinkRepository.addLink(chatId, link)) {
+            throw new InvalidRequestException("Link already exist.");
+        }
         return new LinkResponse(chatId, link.url(), link.tags(), link.filters());
     }
 

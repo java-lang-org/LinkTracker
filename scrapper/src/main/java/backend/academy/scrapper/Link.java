@@ -56,11 +56,11 @@ public class Link {
             return false;
         }
 
-        return Objects.equals(tags, link.tags) && Objects.equals(filters, link.filters) && linkType == link.linkType;
+        return Objects.equals(uri, link.uri);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(tags, filters, linkType);
+        return Objects.hash(uri);
     }
 }

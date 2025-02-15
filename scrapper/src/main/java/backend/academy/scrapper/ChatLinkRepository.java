@@ -6,7 +6,7 @@ import java.util.Optional;
 public interface ChatLinkRepository {
     List<Link> getLinks(long chatId);
 
-    void addLink(long chatId, Link link);
+    boolean addLink(long chatId, Link link);
 
     Optional<Link> removeLink(long chatId, String url);
 
