@@ -157,8 +157,8 @@ public class CommandHandler {
         return """
             /start - register chat
             /end - delete chat
-            /track - track a link
-            /untrack - untrack a link
+            /track - track link
+            /untrack - untrack link
             /list - show list of tracked links
             /help - list of commands
             """;

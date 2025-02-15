@@ -3,8 +3,10 @@ package backend.academy.bot;
 import backend.academy.dto.LinkUpdate;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
+import com.pengrad.telegrambot.model.BotCommand;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.request.SetMyCommands;
 import com.pengrad.telegrambot.response.SendResponse;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -19,6 +21,14 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class BotService {
+    private static final List<BotCommand> COMMANDS = List.of(
+            new BotCommand("/start", "Register chat"),
+            new BotCommand("/end", "Delete chat"),
+            new BotCommand("/track", "Track a link"),
+            new BotCommand("/untrack", "Untrack a link"),
+            new BotCommand("/list", "Show list of tracked links"),
+            new BotCommand("/help", "List of commands"));
+
     private static final int TIMEOUT_IN_SECONDS = 2;
     private static final int TELEGRAM_MESSAGE_LIMIT = 4096;
 
@@ -36,6 +46,7 @@ public class BotService {
     @PostConstruct
     public void startBot() {
         try {
+            registerCommands();
             bot.setUpdatesListener(
                 updates -> {
                     for (Update update : updates) {
@@ -45,8 +56,12 @@ public class BotService {
                 }
             );
         } catch (Exception e) {
-            log.error("Failed to initialize bot updates listener", e);
+            log.error("Failed to start bot", e);
         }
+    }
+
+    public void registerCommands() {
+        bot.execute(new SetMyCommands(COMMANDS.toArray(new BotCommand[0])));
     }
 
     @PreDestroy
