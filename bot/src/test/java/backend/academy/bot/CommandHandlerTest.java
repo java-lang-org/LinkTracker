@@ -1,40 +1,80 @@
 package backend.academy.bot;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.ResponseEntity;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
-public class CommandHandlerTest {
-    @Mock
+class CommandHandlerTest {
     private ChatRepository chatRepository;
-
-    @Mock
     private ScrapperClient scrapperClient;
-
-    @InjectMocks
     private CommandHandler commandHandler;
 
+    @BeforeEach
+    void setUp() {
+        chatRepository = mock(ChatRepository.class);
+        scrapperClient = mock(ScrapperClient.class);
+        commandHandler = new CommandHandler(chatRepository, scrapperClient);
+    }
+
     @Test
-    void handle_Default() {
+    void testUnknownCommand_ReturnsErrorMessage() {
         // Arrange
-        long chatId = 123L;
-        String receivedText = "/start";
+        long chatId = 1L;
+        String unknownCommand = "/unknownCommand";
 
         when(chatRepository.getState(chatId)).thenReturn(BotState.getInstance());
-        when(scrapperClient.registerChat(chatId)).thenReturn(ResponseEntity.ok().build());
 
         // Act
-        commandHandler.handle(chatId, receivedText);
+        String response = commandHandler.handle(chatId, unknownCommand);
 
         // Assert
-        verify(chatRepository, times(1)).getState(chatId);
-        verify(scrapperClient, times(1)).registerChat(chatId);
+        String expectedResponse = """
+            Unknown command.
+            Use /help for more information.
+            """;
+        assertEquals(expectedResponse, response);
+    }
+
+    @Test
+    void testRandomTextAsCommand_ReturnsErrorMessage() {
+        // Arrange
+        long chatId = 1L;
+        String randomText = "Hello, bot!";
+
+        when(chatRepository.getState(chatId)).thenReturn(BotState.getInstance());
+
+        // Act
+        String response = commandHandler.handle(chatId, randomText);
+
+        // Assert
+        String expectedResponse = """
+            Unknown command.
+            Use /help for more information.
+            """;
+        assertEquals(expectedResponse, response);
+    }
+
+    @Test
+    void testHelpCommand_ReturnsHelpMessage() {
+        // Arrange
+        long chatId = 1L;
+        String receivedText = "/help";
+        when(chatRepository.getState(chatId)).thenReturn(BotState.getInstance());
+
+        // Act
+        String response = commandHandler.handle(chatId, receivedText);
+
+        // Assert
+        String expectedResponse = """
+            /start - register chat
+            /end - delete chat
+            /track - track link
+            /untrack - untrack link
+            /list - show list of tracked links
+            /help - list of commands
+            """;
+        assertEquals(expectedResponse, response);
     }
 }
