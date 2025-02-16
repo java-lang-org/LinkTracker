@@ -5,8 +5,6 @@ import backend.academy.dto.ApiErrorResponse;
 import backend.academy.dto.LinkResponse;
 import backend.academy.dto.ListLinksResponse;
 import backend.academy.dto.RemoveLinkRequest;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import java.util.Arrays;
@@ -35,11 +33,9 @@ public class ScrapperController {
     private static final int STACK_TRACE_MAX_SIZE = 10;
 
     private final ChatService chatService;
-    private final ObjectMapper objectMapper;
 
-    public ScrapperController(ChatService chatService, ObjectMapper objectMapper) {
+    public ScrapperController(ChatService chatService) {
         this.chatService = chatService;
-        this.objectMapper = objectMapper;
     }
 
     @PostMapping(path = "/tg-chat/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -57,8 +53,7 @@ public class ScrapperController {
     @GetMapping(path = "/links", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ListLinksResponse> getLinks(@RequestHeader("Tg-Chat-Id") long tgChatId) {
         List<LinkResponse> links = chatService.getLinks(tgChatId);
-        int size = calculateJsonSize(links);
-        return ResponseEntity.ok().body(new ListLinksResponse(links, size));
+        return ResponseEntity.ok().body(new ListLinksResponse(links, links.size()));
     }
 
     @PostMapping(
@@ -119,15 +114,5 @@ public class ScrapperController {
                     .toList()
             )
         );
-    }
-
-    private int calculateJsonSize(Object object) {
-        try {
-            byte[] jsonBytes = objectMapper.writeValueAsBytes(object);
-            return jsonBytes.length;
-        } catch (JsonProcessingException e) {
-            log.error("Error calculating JSON size", e);
-            return 0;
-        }
     }
 }
