@@ -2,6 +2,7 @@ package backend.academy.scrapper;
 
 import backend.academy.dto.AddLinkRequest;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -95,5 +96,78 @@ class ChatLinkRepositoryImplTest {
         assertEquals(2, links.size());
         assertTrue(links.contains(gitHubLink));
         assertTrue(links.contains(stackOverflowLink));
+    }
+
+    @Test
+    void testRemoveExistingLink_ShouldReturnLink() {
+        // Arrange
+        long chatId = 1L;
+
+        // Act
+        assertTrue(repository.addLink(chatId, gitHubLink));
+        Optional<Link> removedLink = repository.removeLink(chatId, gitHubLink.url());
+
+        // Assert
+        assertTrue(removedLink.isPresent());
+        assertEquals(gitHubLink, removedLink.get());
+        assertTrue(repository.getLinks(chatId).isEmpty());
+    }
+
+    @Test
+    void testRemoveNonExistingLink_ShouldReturnEmpty() {
+        // Arrange
+        long chatId = 1L;
+        String nonExistingUrl = "https://notexists.com";
+
+        // Act
+        Optional<Link> removedLink = repository.removeLink(chatId, nonExistingUrl);
+
+        // Assert
+        assertTrue(removedLink.isEmpty());
+    }
+
+    @Test
+    void testRemoveLinkFromEmptyChat_ShouldReturnEmpty() {
+        // Arrange
+        long chatId1 = 1L;
+        long chatId2 = 2L;
+
+        // Act
+        assertTrue(repository.addLink(chatId1, gitHubLink));
+        Optional<Link> removedLink = repository.removeLink(chatId2, gitHubLink.url());
+
+        // Assert
+        assertTrue(removedLink.isEmpty());
+    }
+
+    @Test
+    void testRemoveLinkTrackedByMultipleChats_ShouldNotDeleteLinkFromRepository() {
+        // Arrange
+        long chatId1 = 1L;
+        long chatId2 = 2L;
+
+        // Act
+        assertTrue(repository.addLink(chatId1, gitHubLink));
+        assertTrue(repository.addLink(chatId2, gitHubLink));
+        repository.removeLink(chatId1, gitHubLink.url());
+
+        // Assert
+        List<Link> linksForChat2 = repository.getLinks(chatId2);
+        assertFalse(linksForChat2.isEmpty());
+        assertEquals(gitHubLink, linksForChat2.getFirst());
+    }
+
+    @Test
+    void testRemoveLinkCompletely_WhenLastChatRemovesIt() {
+        // Arrange
+        long chatId = 1L;
+
+        // Act
+        assertTrue(repository.addLink(chatId, stackOverflowLink));
+        repository.removeLink(chatId, stackOverflowLink.url());
+
+        // Assert
+        List<ChatLink> chatLinks = repository.getLink2ChatIds();
+        assertTrue(chatLinks.isEmpty());
     }
 }
