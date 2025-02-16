@@ -1,26 +1,21 @@
 package backend.academy.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 @Getter
-@Setter
-@NoArgsConstructor
 @AllArgsConstructor
-@ToString
 public class LinkUpdate {
     @NotNull(message = "id cannot be null")
     @JsonProperty("id")
     private long id;
 
-    @NotNull(message = "url cannot be null")
+    @NotEmpty(message = "url cannot be null or empty")
     @JsonProperty("url")
     private String url;
 

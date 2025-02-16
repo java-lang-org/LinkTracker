@@ -1,33 +1,28 @@
 package backend.academy.dto;
 
-import java.util.List;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
 
 @Getter
-@Setter
-@NoArgsConstructor
 @AllArgsConstructor
-@ToString
 public class ApiErrorResponse {
-    @NotNull(message = "description cannot be null")
+    @NotEmpty(message = "description cannot be null or empty")
     @JsonProperty("description")
     private String description;
 
-    @NotNull(message = "code cannot be null")
+    @NotEmpty(message = "code cannot be null or empty")
     @JsonProperty("code")
     private String code;
 
-    @NotNull(message = "exceptionName cannot be null")
+    @NotEmpty(message = "exception-name cannot be null or empty")
     @JsonProperty("exceptionName")
     private String exceptionName;
 
-    @NotNull(message = "exceptionMessage cannot be null")
+    @NotEmpty(message = "exception-message cannot be null or empty")
     @JsonProperty("exceptionMessage")
     private String exceptionMessage;
 
