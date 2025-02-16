@@ -36,10 +36,10 @@ public class UrlValidator {
     }
 
     private static boolean isValidScheme(String scheme) {
-        return scheme.equals("http") || scheme.equals("https");
+        return scheme != null && (scheme.equals("http") || scheme.equals("https"));
     }
 
     private static boolean isValidHost(String actual, String expected) {
-        return actual.equals(expected);
+        return actual != null && actual.equals(expected);
     }
 }
