@@ -17,9 +17,7 @@ public class StackOverflowClient {
     private String stackOverflowBaseUrl;
 
     public StackOverflowClient(
-        ScrapperConfig scrapperConfig,
-        @Qualifier("stackOverflowRestClient") RestClient restClient
-    ) {
+            ScrapperConfig scrapperConfig, @Qualifier("stackOverflowRestClient") RestClient restClient) {
         this.scrapperConfig = scrapperConfig;
         this.restClient = restClient;
     }
@@ -27,23 +25,22 @@ public class StackOverflowClient {
     public boolean hasRepositoryUpdated(Link link) {
         String[] parts = link.uri().getPath().split("/");
         String url = UriComponentsBuilder.fromUriString(stackOverflowBaseUrl)
-            .path("/questions/{ids}")
-            .queryParam("order", "desc")
-            .queryParam("sort", "activity")
-            .queryParam("site", "stackoverflow")
-            .buildAndExpand(parts[2])
-            .toUriString();
+                .path("/questions/{ids}")
+                .queryParam("order", "desc")
+                .queryParam("sort", "activity")
+                .queryParam("site", "stackoverflow")
+                .buildAndExpand(parts[2])
+                .toUriString();
 
-        StackOverflowResponse stackOverflowResponse = restClient.get()
-            .uri(url)
-            .retrieve()
-            .body(StackOverflowResponse.class);
+        StackOverflowResponse stackOverflowResponse =
+                restClient.get().uri(url).retrieve().body(StackOverflowResponse.class);
 
-        if (stackOverflowResponse.items().size() != 1) {
+        if (stackOverflowResponse == null || stackOverflowResponse.items().size() != 1) {
             return false;
         }
 
-        StackOverflowQuestion stackOverflowQuestion = stackOverflowResponse.items().getFirst();
+        StackOverflowQuestion stackOverflowQuestion =
+                stackOverflowResponse.items().getFirst();
         if (stackOverflowQuestion.lastActivityDate().isAfter(link.lastUpdate())) {
             link.lastUpdate(stackOverflowQuestion.lastActivityDate());
             return true;

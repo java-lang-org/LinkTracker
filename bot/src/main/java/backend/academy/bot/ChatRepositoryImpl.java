@@ -21,29 +21,26 @@ public class ChatRepositoryImpl implements ChatRepository {
 
     @Override
     public void setBotStateType(long id, BotStateType botStateType) {
-        users.computeIfAbsent(id, _ -> BotState.getInstance())
-            .botStateType(botStateType);
+        users.computeIfAbsent(id, k -> BotState.getInstance()).botStateType(botStateType);
     }
 
     @Override
     public void setUrl(long id, String url) {
-        users.computeIfAbsent(id, _ -> BotState.getInstance())
-            .url(url)
-            .botStateType(BotStateType.WAITING_TAGS);
+        users.computeIfAbsent(id, k -> BotState.getInstance()).url(url).botStateType(BotStateType.WAITING_TAGS);
     }
 
     @Override
     public void setTags(long id, List<String> tags) {
-        users.computeIfAbsent(id, _ -> BotState.getInstance())
-            .tags(new ArrayList<>(tags))
-            .botStateType(BotStateType.WAITING_FILTER);
+        users.computeIfAbsent(id, k -> BotState.getInstance())
+                .tags(new ArrayList<>(tags))
+                .botStateType(BotStateType.WAITING_FILTER);
     }
 
     @Override
     public void setFilters(long id, List<String> filters) {
-        users.computeIfAbsent(id, _ -> BotState.getInstance())
-            .filters(new ArrayList<>(filters))
-            .botStateType(BotStateType.DEFAULT);
+        users.computeIfAbsent(id, k -> BotState.getInstance())
+                .filters(new ArrayList<>(filters))
+                .botStateType(BotStateType.DEFAULT);
     }
 
     @Override

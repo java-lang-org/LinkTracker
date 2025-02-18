@@ -1,5 +1,8 @@
 package backend.academy.bot;
 
+import static backend.academy.bot.BotStateType.WAITING_TRACKED_URL;
+import static backend.academy.bot.BotStateType.WAITING_UNTRACKED_URL;
+
 import backend.academy.dto.ApiErrorResponse;
 import backend.academy.dto.LinkResponse;
 import backend.academy.dto.ListLinksResponse;
@@ -11,8 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import static backend.academy.bot.BotStateType.WAITING_TRACKED_URL;
-import static backend.academy.bot.BotStateType.WAITING_UNTRACKED_URL;
 
 @Component
 @RequiredArgsConstructor
@@ -61,7 +62,7 @@ public class CommandHandler {
         if (response.getStatusCode() == HttpStatus.OK) {
             return "Link is tracked!";
         } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST) {
-            return ((ApiErrorResponse) response.getBody()).description();
+            return handleApiErrorResponseResponse(response);
         } else {
             return handleUnexpectedResponse(response);
         }
@@ -72,8 +73,9 @@ public class CommandHandler {
         chatRepository.setDefault(chatId);
         if (response.getStatusCode() == HttpStatus.OK) {
             return "Link is untracked!";
-        } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST || response.getStatusCode() == HttpStatus.NOT_FOUND) {
-            return ((ApiErrorResponse) response.getBody()).description();
+        } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST
+                || response.getStatusCode() == HttpStatus.NOT_FOUND) {
+            return handleApiErrorResponseResponse(response);
         } else {
             return handleUnexpectedResponse(response);
         }
@@ -103,7 +105,7 @@ public class CommandHandler {
                 Use /help for more information.
                 """;
         } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST) {
-            return ((ApiErrorResponse) response.getBody()).description();
+            return handleApiErrorResponseResponse(response);
         } else {
             return handleUnexpectedResponse(response);
         }
@@ -113,9 +115,9 @@ public class CommandHandler {
         ResponseEntity<?> response = scrapperClient.deleteChat(chatId);
         if (response.getStatusCode() == HttpStatus.OK) {
             return "Bye! You have successfully unregistered.";
-        } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST ||
-            response.getStatusCode() == HttpStatus.NOT_FOUND) {
-            return ((ApiErrorResponse) response.getBody()).description();
+        } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST
+                || response.getStatusCode() == HttpStatus.NOT_FOUND) {
+            return handleApiErrorResponseResponse(response);
         } else {
             return handleUnexpectedResponse(response);
         }
@@ -139,15 +141,15 @@ public class CommandHandler {
         if (response.getStatusCode() == HttpStatus.OK) {
             ListLinksResponse listLinksResponse = (ListLinksResponse) response.getBody();
 
-            if (listLinksResponse.links().isEmpty()) {
+            if (listLinksResponse == null || listLinksResponse.links().isEmpty()) {
                 return "No tracked links.";
             }
 
             return listLinksResponse.links().stream()
-                .map(LinkResponse::toString)
-                .collect(Collectors.joining("\n"));
+                    .map(LinkResponse::toString)
+                    .collect(Collectors.joining("\n"));
         } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST) {
-            return ((ApiErrorResponse) response.getBody()).description();
+            return handleApiErrorResponseResponse(response);
         } else {
             return handleUnexpectedResponse(response);
         }
@@ -164,12 +166,16 @@ public class CommandHandler {
             """;
     }
 
+    private String handleApiErrorResponseResponse(ResponseEntity<?> response) {
+        ApiErrorResponse apiErrorResponse = (ApiErrorResponse) response.getBody();
+        return apiErrorResponse == null ? handleUnexpectedResponse(response) : apiErrorResponse.description();
+    }
+
     private String handleUnexpectedResponse(ResponseEntity<?> response) {
         log.error(
-            "Unexpected error while processing request: Status = {}, Body = {}",
-            response.getStatusCode(),
-            response.getBody()
-        );
+                "Unexpected error while processing request: Status = {}, Body = {}",
+                response.getStatusCode(),
+                response.getBody());
         return "Oops, something went wrong!";
     }
 }

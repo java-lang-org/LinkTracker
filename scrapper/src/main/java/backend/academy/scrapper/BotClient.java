@@ -24,11 +24,12 @@ public class BotClient {
 
     public void updates(Link link, String description, List<Long> chatIds) {
         try {
-            ResponseEntity<ApiErrorResponse> response = restClient.post()
-                .uri(scrapperUrl + "/updates")
-                .body(new LinkUpdate(link.hashCode(), link.url(), description, chatIds))
-                .retrieve()
-                .toEntity(ApiErrorResponse.class);
+            ResponseEntity<ApiErrorResponse> response = restClient
+                    .post()
+                    .uri(scrapperUrl + "/updates")
+                    .body(new LinkUpdate(link.hashCode(), link.url(), description, chatIds))
+                    .retrieve()
+                    .toEntity(ApiErrorResponse.class);
             if (!response.getStatusCode().is2xxSuccessful()) {
                 log.warn("Warn: {}", response.getBody());
             }

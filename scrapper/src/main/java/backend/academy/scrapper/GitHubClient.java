@@ -18,16 +18,18 @@ public class GitHubClient {
 
     public boolean hasRepositoryUpdated(Link link) {
         String[] parts = link.uri().getPath().split("/");
-        GitHubRepoInfo repoInfo = restClient.get()
-            .uri(gitHubBaseUrl + "/repos/{owner}/{repo}", parts[1], parts[2])
-            .retrieve()
-            .body(GitHubRepoInfo.class);
+        GitHubRepoInfo repoInfo = restClient
+                .get()
+                .uri(gitHubBaseUrl + "/repos/{owner}/{repo}", parts[1], parts[2])
+                .retrieve()
+                .body(GitHubRepoInfo.class);
 
-        if (repoInfo.updatedAt().isAfter(link.lastUpdate())) {
-            link.lastUpdate(repoInfo.updatedAt());
-            return true;
+        if (repoInfo == null || !repoInfo.updatedAt().isAfter(link.lastUpdate())) {
+            return false;
         }
 
-        return false;
+        link.lastUpdate(repoInfo.updatedAt());
+
+        return true;
     }
 }

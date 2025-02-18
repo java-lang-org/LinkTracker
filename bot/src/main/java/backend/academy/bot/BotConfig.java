@@ -7,7 +7,4 @@ import org.springframework.validation.annotation.Validated;
 
 @Validated
 @ConfigurationProperties(prefix = "app", ignoreUnknownFields = false)
-public record BotConfig(
-    @NotEmpty String telegramToken,
-    @Min(value = 1) int nThreads
-) {}
+public record BotConfig(@NotEmpty String telegramToken, @Min(value = 1) int nThreads) {}

@@ -1,5 +1,11 @@
 package backend.academy.bot;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import backend.academy.dto.LinkUpdate;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
@@ -10,11 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.anyLong;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class BotServiceTest {
@@ -38,10 +39,7 @@ class BotServiceTest {
         botService.startBot();
 
         // Assert
-        verify(
-            telegramBot,
-            times(1)
-        ).setUpdatesListener(any(UpdatesListener.class));
+        verify(telegramBot, times(1)).setUpdatesListener(any(UpdatesListener.class));
     }
 
     @Test

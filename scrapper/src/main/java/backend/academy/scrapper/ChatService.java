@@ -30,8 +30,8 @@ public class ChatService {
     public List<LinkResponse> getLinks(long chatId) {
         requireChatExist(chatId);
         return chatLinkRepository.getLinks(chatId).stream()
-            .map(link -> new LinkResponse(chatId, link.url(), link.tags(), link.filters()))
-            .toList();
+                .map(link -> new LinkResponse(chatId, link.url(), link.tags(), link.filters()))
+                .toList();
     }
 
     public LinkResponse addLink(long chatId, Link link) {
@@ -47,7 +47,11 @@ public class ChatService {
 
         Optional<Link> link = chatLinkRepository.removeLink(chatId, url);
         if (link.isPresent()) {
-            return new LinkResponse(chatId, link.get().url(), link.get().tags(), link.get().filters());
+            return new LinkResponse(
+                    chatId,
+                    link.orElseThrow().url(),
+                    link.orElseThrow().tags(),
+                    link.orElseThrow().filters());
         }
 
         throw new ChatException(HttpStatus.NOT_FOUND, "Link doesn't exit.");

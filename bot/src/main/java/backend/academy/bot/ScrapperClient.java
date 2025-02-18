@@ -16,7 +16,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
 
 @Service
 @Slf4j
@@ -32,10 +31,11 @@ public class ScrapperClient {
 
     public ResponseEntity<?> registerChat(long chatId) {
         try {
-            return restClient.post()
-                .uri(scrapperUrl + "/tg-chat/{id}", chatId)
-                .retrieve()
-                .toBodilessEntity();
+            return restClient
+                    .post()
+                    .uri(scrapperUrl + "/tg-chat/{id}", chatId)
+                    .retrieve()
+                    .toBodilessEntity();
         } catch (Exception e) {
             return handleException(e, "register chat", chatId);
         }
@@ -43,10 +43,11 @@ public class ScrapperClient {
 
     public ResponseEntity<?> deleteChat(long chatId) {
         try {
-            return restClient.delete()
-                .uri(scrapperUrl + "/tg-chat/{id}", chatId)
-                .retrieve()
-                .toBodilessEntity();
+            return restClient
+                    .delete()
+                    .uri(scrapperUrl + "/tg-chat/{id}", chatId)
+                    .retrieve()
+                    .toBodilessEntity();
         } catch (Exception e) {
             return handleException(e, "delete chat", chatId);
         }
@@ -54,11 +55,12 @@ public class ScrapperClient {
 
     public ResponseEntity<?> getLinks(long chatId) {
         try {
-            return restClient.get()
-                .uri(scrapperUrl + "/links")
-                .headers(headers -> headers.addAll(headersWithChatId(chatId)))
-                .retrieve()
-                .toEntity(ListLinksResponse.class);
+            return restClient
+                    .get()
+                    .uri(scrapperUrl + "/links")
+                    .headers(headers -> headers.addAll(headersWithChatId(chatId)))
+                    .retrieve()
+                    .toEntity(ListLinksResponse.class);
         } catch (Exception e) {
             return handleException(e, "get links", chatId);
         }
@@ -66,13 +68,14 @@ public class ScrapperClient {
 
     public ResponseEntity<?> addLinkTracking(long chatId, BotState botState) {
         try {
-            return restClient.post()
-                .uri(scrapperUrl + "/links")
-                .contentType(MediaType.APPLICATION_JSON)
-                .headers(headers -> headers.addAll(headersWithChatId(chatId)))
-                .body(new AddLinkRequest(botState.url(), botState.tags(), botState.filters()))
-                .retrieve()
-                .toEntity(LinkResponse.class);
+            return restClient
+                    .post()
+                    .uri(scrapperUrl + "/links")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .headers(headers -> headers.addAll(headersWithChatId(chatId)))
+                    .body(new AddLinkRequest(botState.url(), botState.tags(), botState.filters()))
+                    .retrieve()
+                    .toEntity(LinkResponse.class);
         } catch (Exception e) {
             return handleException(e, "add link tracking", chatId);
         }
@@ -80,13 +83,14 @@ public class ScrapperClient {
 
     public ResponseEntity<?> removeLinkTracking(long chatId, String uri) {
         try {
-            return restClient.method(HttpMethod.DELETE)
-                .uri(scrapperUrl + "/links")
-                .contentType(MediaType.APPLICATION_JSON)
-                .headers(headers -> headers.addAll(headersWithChatId(chatId)))
-                .body(new RemoveLinkRequest(uri))
-                .retrieve()
-                .toEntity(LinkResponse.class);
+            return restClient
+                    .method(HttpMethod.DELETE)
+                    .uri(scrapperUrl + "/links")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .headers(headers -> headers.addAll(headersWithChatId(chatId)))
+                    .body(new RemoveLinkRequest(uri))
+                    .retrieve()
+                    .toEntity(LinkResponse.class);
         } catch (Exception e) {
             return handleException(e, "remove link tracking", chatId);
         }
@@ -103,9 +107,6 @@ public class ScrapperClient {
             HttpStatusCodeException httpEx = (HttpStatusCodeException) e;
             log.error("Error {} {}: {} - {}", action, chatId, httpEx.getStatusCode(), httpEx.getResponseBodyAsString());
             return ResponseEntity.status(httpEx.getStatusCode()).body(httpEx.getResponseBodyAs(ApiErrorResponse.class));
-        } else if (e instanceof RestClientException) {
-            log.error("Network error while {} {}: {}", action, chatId, e.getMessage(), e);
-            return ResponseEntity.internalServerError().build();
         } else {
             log.error("Unexpected error while {} {}", action, chatId, e);
             return ResponseEntity.internalServerError().build();

@@ -14,11 +14,10 @@ public class ScrapperService {
     private final BotClient botClient;
 
     public ScrapperService(
-        ChatService chatService,
-        GitHubClient gitHubClient,
-        StackOverflowClient stackOverflowClient,
-        BotClient botClient
-    ) {
+            ChatService chatService,
+            GitHubClient gitHubClient,
+            StackOverflowClient stackOverflowClient,
+            BotClient botClient) {
         this.chatService = chatService;
         this.gitHubClient = gitHubClient;
         this.stackOverflowClient = stackOverflowClient;
@@ -27,23 +26,21 @@ public class ScrapperService {
 
     @Scheduled(fixedRate = 3_600_000) // 1 hour
     public void checkUpdates() {
-        chatService.getLink2ChatIds().forEach(
-            chatLink -> {
-                Link link = chatLink.link();
-                List<Long> chatIds = chatLink.chatIds();
-                switch (link.linkType()) {
-                    case GITHUB -> {
-                        if (gitHubClient.hasRepositoryUpdated(link)) {
-                            botClient.updates(link, "...", chatIds);
-                        }
+        chatService.getLink2ChatIds().forEach(chatLink -> {
+            Link link = chatLink.link();
+            List<Long> chatIds = chatLink.chatIds();
+            switch (link.linkType()) {
+                case GITHUB -> {
+                    if (gitHubClient.hasRepositoryUpdated(link)) {
+                        botClient.updates(link, "...", chatIds);
                     }
-                    case STACK_OVERFLOW -> {
-                        if (stackOverflowClient.hasRepositoryUpdated(link)) {
-                            botClient.updates(link, "...", chatIds);
-                        }
+                }
+                case STACK_OVERFLOW -> {
+                    if (stackOverflowClient.hasRepositoryUpdated(link)) {
+                        botClient.updates(link, "...", chatIds);
                     }
                 }
             }
-        );
+        });
     }
 }

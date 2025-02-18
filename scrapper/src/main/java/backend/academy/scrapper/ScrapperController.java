@@ -57,27 +57,22 @@ public class ScrapperController {
     }
 
     @PostMapping(
-        path = "/links",
-        consumes = MediaType.APPLICATION_JSON_VALUE,
-        produces = MediaType.APPLICATION_JSON_VALUE
-    )
+            path = "/links",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<LinkResponse> addLinkTracking(
-        @RequestHeader("Tg-Chat-Id") long tgChatId,
-        @Valid @RequestBody AddLinkRequest addLinkRequest
-    ) {
+            @RequestHeader("Tg-Chat-Id") long tgChatId, @Valid @RequestBody AddLinkRequest addLinkRequest) {
         Link link = Link.parse(addLinkRequest);
         LinkResponse linkResponse = chatService.addLink(tgChatId, link);
         return ResponseEntity.ok().body(linkResponse);
     }
 
     @DeleteMapping(
-        path = "/links",
-        consumes = MediaType.APPLICATION_JSON_VALUE,
-        produces = MediaType.APPLICATION_JSON_VALUE
-    )
+            path = "/links",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<LinkResponse> removeLinkTracking(
-        @RequestHeader("Tg-Chat-Id") long tgChatId,
-        @Valid @RequestBody RemoveLinkRequest removeLinkRequest) {
+            @RequestHeader("Tg-Chat-Id") long tgChatId, @Valid @RequestBody RemoveLinkRequest removeLinkRequest) {
         LinkResponse linkResponse = chatService.removeLink(tgChatId, removeLinkRequest.uri());
         return ResponseEntity.ok().body(linkResponse);
     }
@@ -89,30 +84,28 @@ public class ScrapperController {
     })
     public ResponseEntity<ApiErrorResponse> handleBadRequestExceptions(Exception e) {
         log.error("Bad request: [{}] - {}", e.getClass().getSimpleName(), e.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-            new ApiErrorResponse(
-                "Incorrect request parameters",
-                String.valueOf(HttpStatus.BAD_REQUEST.value()),
-                e.getClass().getSimpleName(),
-                e.getMessage(),
-                Arrays.stream(e.getStackTrace()).map(StackTraceElement::toString).toList()
-            )
-        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiErrorResponse(
+                        "Incorrect request parameters",
+                        String.valueOf(HttpStatus.BAD_REQUEST.value()),
+                        e.getClass().getSimpleName(),
+                        e.getMessage(),
+                        Arrays.stream(e.getStackTrace())
+                                .map(StackTraceElement::toString)
+                                .toList()));
     }
 
     @ExceptionHandler({ChatException.class, InvalidRequestException.class})
     public ResponseEntity<ApiErrorResponse> handleInternalExceptions(ResponseStatusException e) {
-        return ResponseEntity.status(e.getStatusCode()).body(
-            new ApiErrorResponse(
-                e.getReason(),
-                String.valueOf(e.getStatusCode().value()),
-                e.getClass().getSimpleName(),
-                e.getMessage(),
-                Arrays.stream(e.getStackTrace())
-                    .limit(STACK_TRACE_MAX_SIZE)
-                    .map(StackTraceElement::toString)
-                    .toList()
-            )
-        );
+        return ResponseEntity.status(e.getStatusCode())
+                .body(new ApiErrorResponse(
+                        e.getReason(),
+                        String.valueOf(e.getStatusCode().value()),
+                        e.getClass().getSimpleName(),
+                        e.getMessage(),
+                        Arrays.stream(e.getStackTrace())
+                                .limit(STACK_TRACE_MAX_SIZE)
+                                .map(StackTraceElement::toString)
+                                .toList()));
     }
 }

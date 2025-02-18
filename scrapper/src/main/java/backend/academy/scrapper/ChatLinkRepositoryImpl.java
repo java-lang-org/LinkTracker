@@ -21,13 +21,13 @@ public class ChatLinkRepositoryImpl implements ChatLinkRepository {
 
     @Override
     public boolean addLink(long chatId, Link link) {
-        Set<Link> links = chatId2Links.computeIfAbsent(chatId, (_) -> new HashSet<>());
+        Set<Link> links = chatId2Links.computeIfAbsent(chatId, k -> new HashSet<>());
         if (links.contains(link)) {
             return false;
         }
 
         links.add(link);
-        link2ChatIds.computeIfAbsent(link, (_) -> new HashSet<>()).add(chatId);
+        link2ChatIds.computeIfAbsent(link, k -> new HashSet<>()).add(chatId);
 
         return true;
     }
@@ -39,15 +39,15 @@ public class ChatLinkRepositoryImpl implements ChatLinkRepository {
         }
 
         Optional<Link> linkToRemove = chatId2Links.get(chatId).stream()
-            .filter(link -> link.url().equals(url))
-            .findFirst();
+                .filter(link -> link.url().equals(url))
+                .findFirst();
 
         if (linkToRemove.isEmpty()) {
             return linkToRemove;
         }
 
-        chatId2Links.get(chatId).remove(linkToRemove.get());
-        removeChatIdForLink(chatId, linkToRemove.get());
+        chatId2Links.get(chatId).remove(linkToRemove.orElseThrow());
+        removeChatIdForLink(chatId, linkToRemove.orElseThrow());
 
         return linkToRemove;
     }
@@ -63,7 +63,7 @@ public class ChatLinkRepositoryImpl implements ChatLinkRepository {
     @Override
     public List<ChatLink> getLink2ChatIds() {
         return link2ChatIds.entrySet().stream()
-            .map(entry -> new ChatLink(entry.getKey(), new ArrayList<>(entry.getValue())))
-            .toList();
+                .map(entry -> new ChatLink(entry.getKey(), new ArrayList<>(entry.getValue())))
+                .toList();
     }
 }

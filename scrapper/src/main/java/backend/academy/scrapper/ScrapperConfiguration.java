@@ -9,9 +9,9 @@ public class ScrapperConfiguration {
     @Bean(name = "gitHubRestClient")
     public RestClient gitHubRestClient(ScrapperConfig scrapperConfig) {
         return RestClient.builder()
-            .defaultHeader("X-GitHub-Api-Version", "2022-11-28")
-            .defaultHeader("Authorization", "Bearer " + scrapperConfig.githubToken())
-            .build();
+                .defaultHeader("X-GitHub-Api-Version", "2022-11-28")
+                .defaultHeader("Authorization", "Bearer " + scrapperConfig.githubToken())
+                .build();
     }
 
     @Bean(name = "stackOverflowRestClient")

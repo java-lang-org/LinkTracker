@@ -1,13 +1,14 @@
 package backend.academy.scrapper;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import backend.academy.dto.AddLinkRequest;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ChatLinkRepositoryImplTest {
     private ChatLinkRepositoryImpl repository;
@@ -20,19 +21,9 @@ class ChatLinkRepositoryImplTest {
         repository = new ChatLinkRepositoryImpl();
 
         gitHubLink = Link.parse(
-            new AddLinkRequest(
-                "https://github.com/user/repo",
-                List.of("github-tag"),
-                List.of("filter:value")
-            )
-        );
-        stackOverflowLink = Link.parse(
-            new AddLinkRequest(
-                "https://stackoverflow.com/questions/12345/title",
-                List.of("stackoverflow-tag"),
-                List.of()
-            )
-        );
+                new AddLinkRequest("https://github.com/user/repo", List.of("github-tag"), List.of("filter:value")));
+        stackOverflowLink = Link.parse(new AddLinkRequest(
+                "https://stackoverflow.com/questions/12345", List.of("stackoverflow-tag"), List.of()));
     }
 
     @Test
@@ -109,7 +100,7 @@ class ChatLinkRepositoryImplTest {
 
         // Assert
         assertTrue(removedLink.isPresent());
-        assertEquals(gitHubLink, removedLink.get());
+        assertEquals(gitHubLink, removedLink.orElseThrow());
         assertTrue(repository.getLinks(chatId).isEmpty());
     }
 

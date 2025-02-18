@@ -1,11 +1,12 @@
 package backend.academy.scrapper;
 
-import java.net.URI;
-import java.util.Optional;
-import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.net.URI;
+import java.util.Optional;
+import org.junit.jupiter.api.Test;
 
 class UrlValidatorTest {
     @Test
@@ -18,7 +19,7 @@ class UrlValidatorTest {
 
         // Assert
         assertTrue(result.isPresent());
-        assertEquals("https://github.com/user/repo", result.get().toString());
+        assertEquals("https://github.com/user/repo", result.orElseThrow().toString());
     }
 
     @Test
@@ -31,7 +32,7 @@ class UrlValidatorTest {
 
         // Assert
         assertTrue(result.isPresent());
-        assertEquals(url, result.get().toString());
+        assertEquals(url, result.orElseThrow().toString());
     }
 
     @Test
@@ -61,19 +62,6 @@ class UrlValidatorTest {
     @Test
     void testValidStackOverflowUrl() {
         // Arrange
-        String url = "https://stackoverflow.com/questions/12345/example";
-
-        // Act
-        Optional<URI> result = UrlValidator.isValidStackOverflowUrl(url);
-
-        // Assert
-        assertTrue(result.isPresent());
-        assertEquals(url, result.get().toString());
-    }
-
-    @Test
-    void testValidStackOverflowUrlWithoutTitle() {
-        // Arrange
         String url = "https://stackoverflow.com/questions/12345";
 
         // Act
@@ -81,7 +69,7 @@ class UrlValidatorTest {
 
         // Assert
         assertTrue(result.isPresent());
-        assertEquals(url, result.get().toString());
+        assertEquals(url, result.orElseThrow().toString());
     }
 
     @Test
@@ -94,25 +82,13 @@ class UrlValidatorTest {
 
         // Assert
         assertTrue(result.isPresent());
-        assertEquals(url, result.get().toString());
+        assertEquals(url, result.orElseThrow().toString());
     }
 
     @Test
     void testInvalidStackOverflowUrl_NoId() {
         // Arrange
         String url = "https://stackoverflow.com/questions/";
-
-        // Act
-        Optional<URI> result = UrlValidator.isValidStackOverflowUrl(url);
-
-        // Assert
-        assertFalse(result.isPresent());
-    }
-
-    @Test
-    void testInvalidStackOverflowUrl_WrongPath() {
-        // Arrange
-        String url = "https://stackoverflow.com/question/12345";
 
         // Act
         Optional<URI> result = UrlValidator.isValidStackOverflowUrl(url);

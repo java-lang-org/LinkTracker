@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 public class UrlValidator {
     private static final Pattern GITHUB_PATTERN = Pattern.compile("^/([^/]+)/([^/]+)$");
-    private static final Pattern STACKOVERFLOW_PATTERN = Pattern.compile("^/questions/(\\d+)(?:/[^/]*)?$");
+    private static final Pattern STACKOVERFLOW_PATTERN = Pattern.compile("^/questions/(\\d+)$");
 
     public static Optional<URI> isValidGitHubUrl(String url) {
         return validateUrl(url, "github.com", GITHUB_PATTERN);

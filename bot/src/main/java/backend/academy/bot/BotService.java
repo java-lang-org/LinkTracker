@@ -47,14 +47,12 @@ public class BotService {
     public void startBot() {
         try {
             registerCommands();
-            bot.setUpdatesListener(
-                updates -> {
-                    for (Update update : updates) {
-                        executorService.submit(() -> processUpdate(update));
-                    }
-                    return UpdatesListener.CONFIRMED_UPDATES_ALL;
+            bot.setUpdatesListener(updates -> {
+                for (Update update : updates) {
+                    executorService.submit(() -> processUpdate(update));
                 }
-            );
+                return UpdatesListener.CONFIRMED_UPDATES_ALL;
+            });
         } catch (Exception e) {
             log.error("Failed to start bot", e);
         }
@@ -94,7 +92,9 @@ public class BotService {
             }
 
             if (update.message().text() == null) {
-                log.info("Received a non-text message from chat {}. Ignoring.", update.message().chat().id());
+                log.info(
+                        "Received a non-text message from chat {}. Ignoring.",
+                        update.message().chat().id());
                 return;
             }
 

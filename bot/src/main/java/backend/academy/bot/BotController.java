@@ -27,30 +27,26 @@ public class BotController {
     }
 
     @PostMapping(
-        path = "/updates",
-        consumes = MediaType.APPLICATION_JSON_VALUE,
-        produces = MediaType.APPLICATION_JSON_VALUE
-    )
+            path = "/updates",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> updates(@Valid @RequestBody LinkUpdate linkUpdate) {
         botService.updates(linkUpdate);
-        log.info("Link update: {}", linkUpdate);
         return ResponseEntity.ok().build();
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleException(Exception e) {
-        log.error("Unexpected error: {}", e.getMessage(), e);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
-            new ApiErrorResponse(
-                "Incorrect request parameters.",
-                HttpStatus.BAD_REQUEST.toString(),
-                e.getClass().getSimpleName(),
-                e.getMessage(),
-                Arrays.stream(e.getStackTrace())
-                    .limit(STACK_TRACE_MAX_SIZE)
-                    .map(StackTraceElement::toString)
-                    .toList()
-            )
-        );
+        log.error("Error occurred", e);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiErrorResponse(
+                        "Incorrect request parameters.",
+                        HttpStatus.BAD_REQUEST.toString(),
+                        e.getClass().getSimpleName(),
+                        e.getMessage(),
+                        Arrays.stream(e.getStackTrace())
+                                .limit(STACK_TRACE_MAX_SIZE)
+                                .map(StackTraceElement::toString)
+                                .toList()));
     }
 }

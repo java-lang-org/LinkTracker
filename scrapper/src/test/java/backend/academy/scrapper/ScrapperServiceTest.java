@@ -1,13 +1,5 @@
 package backend.academy.scrapper;
 
-import backend.academy.dto.AddLinkRequest;
-import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.anyString;
@@ -18,6 +10,15 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+
+import backend.academy.dto.AddLinkRequest;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class ScrapperServiceTest {
@@ -37,19 +38,9 @@ class ScrapperServiceTest {
     private ScrapperService scrapperService;
 
     private final Link gitHubLink = Link.parse(
-        new AddLinkRequest(
-            "https://github.com/user/repo",
-            List.of("github-tag"),
-            List.of("filter:value")
-        )
-    );
+            new AddLinkRequest("https://github.com/user/repo", List.of("github-tag"), List.of("filter:value")));
     private final Link stackOverflowLink = Link.parse(
-        new AddLinkRequest(
-            "https://stackoverflow.com/questions/12345/title",
-            List.of("stackoverflow-tag"),
-            List.of()
-        )
-    );
+            new AddLinkRequest("https://stackoverflow.com/questions/12345", List.of("stackoverflow-tag"), List.of()));
     private final List<Long> chatIds = List.of(1L, 2L, 3L);
 
     @BeforeEach
@@ -86,10 +77,8 @@ class ScrapperServiceTest {
     @Test
     void testCheckUpdates_NoUpdates_ShouldNotSendNotifications() {
         // Arrange
-        when(chatService.getLink2ChatIds()).thenReturn(List.of(
-            new ChatLink(gitHubLink, chatIds),
-            new ChatLink(stackOverflowLink, chatIds)
-        ));
+        when(chatService.getLink2ChatIds())
+                .thenReturn(List.of(new ChatLink(gitHubLink, chatIds), new ChatLink(stackOverflowLink, chatIds)));
         when(gitHubClient.hasRepositoryUpdated(gitHubLink)).thenReturn(false);
         when(stackOverflowClient.hasRepositoryUpdated(stackOverflowLink)).thenReturn(false);
 
