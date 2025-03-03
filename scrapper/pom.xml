@@ -90,6 +90,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>1.18.36</version>
             <optional>true</optional>
         </dependency>
 
@@ -140,6 +141,12 @@
         <!--            <artifactId>spring-kafka-test</artifactId>-->
         <!--            <scope>test</scope>-->
         <!--        </dependency>-->
+
+        <dependency>
+            <groupId>backend.academy</groupId>
+            <artifactId>dto</artifactId>
+            <version>1.0</version>
+        </dependency>
     </dependencies>
 
     <build>

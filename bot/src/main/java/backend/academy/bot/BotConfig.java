@@ -1,9 +1,10 @@
 package backend.academy.bot;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
 @Validated
 @ConfigurationProperties(prefix = "app", ignoreUnknownFields = false)
-public record BotConfig(@NotEmpty String telegramToken) {}
+public record BotConfig(@NotEmpty String telegramToken, @Min(value = 1) int nThreads) {}
