@@ -10,38 +10,25 @@ import com.pengrad.telegrambot.request.SetMyCommands;
 import com.pengrad.telegrambot.response.SendResponse;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class BotService {
-    private static final List<BotCommand> COMMANDS = List.of(
-            new BotCommand("/start", "Register chat"),
-            new BotCommand("/end", "Delete chat"),
-            new BotCommand("/track", "Track a link"),
-            new BotCommand("/untrack", "Untrack a link"),
-            new BotCommand("/list", "Show list of tracked links"),
-            new BotCommand("/help", "List of commands"));
-
     private static final int TIMEOUT_IN_SECONDS = 2;
     private static final int TELEGRAM_MESSAGE_LIMIT = 4096;
 
     private final TelegramBot bot;
     private final ExecutorService executorService;
     private final CommandHandler commandHandler;
-
-    @Autowired
-    public BotService(TelegramBot bot, ExecutorService executorService, CommandHandler commandHandler) {
-        this.bot = bot;
-        this.executorService = executorService;
-        this.commandHandler = commandHandler;
-    }
 
     @PostConstruct
     public void startBot() {
@@ -56,10 +43,6 @@ public class BotService {
         } catch (Exception e) {
             log.error("Failed to start bot", e);
         }
-    }
-
-    public void registerCommands() {
-        bot.execute(new SetMyCommands(COMMANDS.toArray(new BotCommand[0])));
     }
 
     @PreDestroy
@@ -83,6 +66,14 @@ public class BotService {
         for (long chatId : linkUpdate.tgChatIds()) {
             sendMessage(chatId, message);
         }
+    }
+
+    private void registerCommands() {
+        BotCommand[] botCommands = Arrays.stream(BotCommandEnum.values())
+                .map(BotCommandEnum::toBotCommand)
+                .toArray(BotCommand[]::new);
+
+        bot.execute(new SetMyCommands(botCommands));
     }
 
     private void processUpdate(Update update) {

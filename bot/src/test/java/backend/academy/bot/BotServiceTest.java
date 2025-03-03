@@ -1,5 +1,6 @@
 package backend.academy.bot;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.times;
@@ -9,10 +10,12 @@ import static org.mockito.Mockito.when;
 import backend.academy.dto.LinkUpdate;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
+import com.pengrad.telegrambot.request.SendMessage;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -64,6 +67,14 @@ class BotServiceTest {
         botService.updates(linkUpdate);
 
         // Assert
-        // TODO:
+        ArgumentCaptor<SendMessage> captor = ArgumentCaptor.forClass(SendMessage.class);
+        verify(telegramBot, times(2)).execute(captor.capture());
+
+        List<SendMessage> capturedMessages = captor.getAllValues();
+        assertThat(capturedMessages).hasSize(2);
+        assertThat(capturedMessages.get(0).getParameters().get("chat_id")).isEqualTo(1L);
+        assertThat(capturedMessages.get(1).getParameters().get("chat_id")).isEqualTo(12L);
+        assertThat(capturedMessages.get(0).getParameters().get("text"))
+                .isEqualTo("Link 'http://example.com' was updated: updated");
     }
 }
