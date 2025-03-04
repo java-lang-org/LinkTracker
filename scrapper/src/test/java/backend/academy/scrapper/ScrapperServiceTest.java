@@ -12,6 +12,9 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import backend.academy.dto.AddLinkRequest;
+import backend.academy.scrapper.client.external.github.GitHubClient;
+import backend.academy.scrapper.client.external.stackoverflow.StackOverflowClient;
+import backend.academy.scrapper.client.internal.bot.BotClient;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,7 +55,7 @@ class ScrapperServiceTest {
     void testCheckUpdates_GitHubUpdated_ShouldNotifySubscribedChats() {
         // Arrange
         when(chatService.getLink2ChatIds()).thenReturn(List.of(new ChatLink(gitHubLink, chatIds)));
-        when(gitHubClient.hasRepositoryUpdated(gitHubLink)).thenReturn(true);
+        when(gitHubClient.hasUpdate(gitHubLink)).thenReturn(true);
 
         // Act
         scrapperService.checkUpdates();
@@ -65,7 +68,7 @@ class ScrapperServiceTest {
     void testCheckUpdates_StackOverflowUpdated_ShouldNotifySubscribedChats() {
         // Arrange
         when(chatService.getLink2ChatIds()).thenReturn(List.of(new ChatLink(stackOverflowLink, chatIds)));
-        when(stackOverflowClient.hasRepositoryUpdated(stackOverflowLink)).thenReturn(true);
+        when(stackOverflowClient.hasUpdate(stackOverflowLink)).thenReturn(true);
 
         // Act
         scrapperService.checkUpdates();
@@ -79,8 +82,8 @@ class ScrapperServiceTest {
         // Arrange
         when(chatService.getLink2ChatIds())
                 .thenReturn(List.of(new ChatLink(gitHubLink, chatIds), new ChatLink(stackOverflowLink, chatIds)));
-        when(gitHubClient.hasRepositoryUpdated(gitHubLink)).thenReturn(false);
-        when(stackOverflowClient.hasRepositoryUpdated(stackOverflowLink)).thenReturn(false);
+        when(gitHubClient.hasUpdate(gitHubLink)).thenReturn(false);
+        when(stackOverflowClient.hasUpdate(stackOverflowLink)).thenReturn(false);
 
         // Act
         scrapperService.checkUpdates();

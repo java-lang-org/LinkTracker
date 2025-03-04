@@ -1,26 +1,25 @@
-package backend.academy.scrapper;
+package backend.academy.scrapper.client.external.github;
 
+import backend.academy.scrapper.Link;
+import backend.academy.scrapper.client.external.ExternalClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 @Service
-public class GitHubClient {
-    private final RestClient restClient;
-
-    @Value("${github.base-url:https://api.github.com}")
-    private String gitHubBaseUrl;
-
-    public GitHubClient(@Qualifier("gitHubRestClient") RestClient restClient) {
-        this.restClient = restClient;
+public class GitHubClient extends ExternalClient {
+    public GitHubClient(
+            @Value("${github.base-url:https://api.github.com}") String baseUrl,
+            @Qualifier("gitHubRestClient") RestClient restClient) {
+        super(baseUrl, restClient);
     }
 
-    public boolean hasRepositoryUpdated(Link link) {
+    public boolean hasUpdate(Link link) {
         String[] parts = link.uri().getPath().split("/");
-        GitHubRepoInfo repoInfo = restClient
+        GitHubRepoInfo repoInfo = restClient()
                 .get()
-                .uri(gitHubBaseUrl + "/repos/{owner}/{repo}", parts[1], parts[2])
+                .uri(baseUrl() + "/repos/{owner}/{repo}", parts[1], parts[2])
                 .retrieve()
                 .body(GitHubRepoInfo.class);
 

@@ -1,4 +1,4 @@
-package backend.academy.scrapper;
+package backend.academy.scrapper.client.external.stackoverflow;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;

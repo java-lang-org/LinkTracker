@@ -1,4 +1,4 @@
-package backend.academy.scrapper;
+package backend.academy.scrapper.client.external.github;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.ZonedDateTime;

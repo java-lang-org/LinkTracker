@@ -1,6 +1,8 @@
-package backend.academy.scrapper;
+package backend.academy.scrapper.client.external.stackoverflow;
 
-import lombok.extern.slf4j.Slf4j;
+import backend.academy.scrapper.Link;
+import backend.academy.scrapper.ScrapperConfig;
+import backend.academy.scrapper.client.external.ExternalClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -8,23 +10,21 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
-@Slf4j
-public class StackOverflowClient {
+public class StackOverflowClient extends ExternalClient {
     private final ScrapperConfig scrapperConfig;
-    private final RestClient restClient;
-
-    @Value("${stackoverflow.base-url:https://api.stackexchange.com/2.3}")
-    private String stackOverflowBaseUrl;
 
     public StackOverflowClient(
-            ScrapperConfig scrapperConfig, @Qualifier("stackOverflowRestClient") RestClient restClient) {
+            @Value("${stackoverflow.base-url:https://api.stackexchange.com/2.3}") String baseUrl,
+            @Qualifier("stackOverflowRestClient") RestClient restClient,
+            ScrapperConfig scrapperConfig) {
+        super(baseUrl, restClient);
+
         this.scrapperConfig = scrapperConfig;
-        this.restClient = restClient;
     }
 
-    public boolean hasRepositoryUpdated(Link link) {
+    public boolean hasUpdate(Link link) {
         String[] parts = link.uri().getPath().split("/");
-        String url = UriComponentsBuilder.fromUriString(stackOverflowBaseUrl)
+        String url = UriComponentsBuilder.fromUriString(baseUrl())
                 .path("/questions/{ids}")
                 .queryParam("order", "desc")
                 .queryParam("sort", "activity")
@@ -33,7 +33,7 @@ public class StackOverflowClient {
                 .toUriString();
 
         StackOverflowResponse stackOverflowResponse =
-                restClient.get().uri(url).retrieve().body(StackOverflowResponse.class);
+                restClient().get().uri(url).retrieve().body(StackOverflowResponse.class);
 
         if (stackOverflowResponse == null || stackOverflowResponse.items().size() != 1) {
             return false;

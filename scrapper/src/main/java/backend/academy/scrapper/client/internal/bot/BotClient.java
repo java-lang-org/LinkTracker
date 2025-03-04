@@ -1,7 +1,8 @@
-package backend.academy.scrapper;
+package backend.academy.scrapper.client.internal.bot;
 
 import backend.academy.dto.ApiErrorResponse;
 import backend.academy.dto.LinkUpdate;
+import backend.academy.scrapper.Link;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
