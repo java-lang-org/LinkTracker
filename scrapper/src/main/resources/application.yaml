@@ -7,12 +7,29 @@ app:
 spring:
   application:
     name: Scrapper
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://postgresql:5432/scrapper
+    username: postgres
+    password: postgres
+
   liquibase:
     enabled: false
+
   jpa:
+    show-sql: true
     hibernate:
       ddl-auto: validate
+    properties:
+      hibernate.format_sql: true
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
 server:
   port: 8081
