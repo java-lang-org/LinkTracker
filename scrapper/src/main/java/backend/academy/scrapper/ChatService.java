@@ -1,75 +1,65 @@
 package backend.academy.scrapper;
 
 import backend.academy.dto.LinkResponse;
+import backend.academy.scrapper.entity.ChatEntity;
+import backend.academy.scrapper.repository.ChatRepository;
+import jakarta.transaction.Transactional;
 import java.util.List;
-import java.util.Optional;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
+@AllArgsConstructor
 public class ChatService {
     private final ChatRepository chatRepository;
-    private final ChatLinkRepository chatLinkRepository;
+    private final LinkService linkService;
 
-    public ChatService(ChatRepository chatRepository, ChatLinkRepository chatLinkRepository) {
-        this.chatRepository = chatRepository;
-        this.chatLinkRepository = chatLinkRepository;
-    }
-
+    @Transactional
     public void registerChat(long chatId) {
         requireChatDoesNotExist(chatId);
-        chatRepository.registerChat(chatId);
+        chatRepository.save(new ChatEntity(chatId));
     }
 
+    @Transactional
     public void deleteChat(long chatId) {
-        requireChatExist(chatId);
-        chatRepository.deleteChat(chatId);
-        chatLinkRepository.getLinks(chatId).forEach(link -> chatLinkRepository.removeLink(chatId, link.url()));
+        ChatEntity chatEntity = getChatEntityOrThrow(chatId);
+        linkService.deleteChat(chatEntity);
+        chatRepository.delete(chatEntity);
     }
 
+    @Transactional
     public List<LinkResponse> getLinks(long chatId) {
-        requireChatExist(chatId);
-        return chatLinkRepository.getLinks(chatId).stream()
-                .map(link -> new LinkResponse(chatId, link.url(), link.tags(), link.filters()))
-                .toList();
+        return linkService.getLinks(getChatEntityOrThrow(chatId));
     }
 
+    @Transactional
     public LinkResponse addLink(long chatId, Link link) {
-        requireChatExist(chatId);
-        if (!chatLinkRepository.addLink(chatId, link)) {
-            throw new InvalidRequestException("Link already exist.");
-        }
+        linkService.addLink(getChatEntityOrThrow(chatId), link);
         return new LinkResponse(chatId, link.url(), link.tags(), link.filters());
     }
 
+    @Transactional
     public LinkResponse removeLink(long chatId, String url) {
-        requireChatExist(chatId);
-
-        Optional<Link> link = chatLinkRepository.removeLink(chatId, url);
-        if (link.isPresent()) {
-            return new LinkResponse(
-                    chatId,
-                    link.orElseThrow().url(),
-                    link.orElseThrow().tags(),
-                    link.orElseThrow().filters());
-        }
-
-        throw new ChatException(HttpStatus.NOT_FOUND, "Link doesn't exit.");
+        return linkService
+                .removeLink(getChatEntityOrThrow(chatId), url)
+                .orElseThrow(() -> new ChatException(HttpStatus.NOT_FOUND, "Link doesn't exist."));
     }
 
     public List<ChatLink> getLink2ChatIds() {
-        return chatLinkRepository.getLink2ChatIds();
-    }
-
-    private void requireChatExist(long chatId) {
-        if (!chatRepository.exists(chatId)) {
-            throw new ChatException(HttpStatus.BAD_REQUEST, "You must be registered to use this command.");
-        }
+        return List.of();
     }
 
     private void requireChatDoesNotExist(long chatId) {
-        if (chatRepository.exists(chatId)) {
+        if (chatRepository.existsById(chatId)) {
             throw new ChatException(HttpStatus.BAD_REQUEST, "You are already registered.");
         }
+    }
+
+    private ChatEntity getChatEntityOrThrow(long chatId) {
+        return chatRepository
+                .findById(chatId)
+                .orElseThrow(
+                        () -> new ChatException(HttpStatus.BAD_REQUEST, "You must be registered to use this command."));
     }
 }

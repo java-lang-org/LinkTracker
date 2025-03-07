@@ -4,11 +4,12 @@ import backend.academy.dto.AddLinkRequest;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Objects;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
+@EqualsAndHashCode(of = "uri")
 public class Link {
     private final URI uri;
     private final List<String> tags;
@@ -40,23 +41,5 @@ public class Link {
 
     public String url() {
         return uri.toString();
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (this == object) {
-            return true;
-        }
-
-        if (!(object instanceof Link link)) {
-            return false;
-        }
-
-        return Objects.equals(uri, link.uri);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(uri);
     }
 }
