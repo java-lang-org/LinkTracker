@@ -12,9 +12,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
-public interface ChatLinkRepository extends JpaRepository<ChatLinkEntity, ChatLinkId> {
+public interface ChatLinkRepository extends JpaRepository<ChatLinkEntity, ChatLinkId>, CustomChatLinkRepository {
     @Query(
-            """
+    """
         SELECT new backend.academy.scrapper.LinkWithTagsAndFilters(
             linkEntity.url,
             STRING_AGG((DISTINCT(tagEntity.name)), ' '),
@@ -39,7 +39,7 @@ public interface ChatLinkRepository extends JpaRepository<ChatLinkEntity, ChatLi
     List<LinkWithTagsAndFilters> findLinksWithTagsAndFiltersByChatEntity(@Param("chatEntity") ChatEntity chatEntity);
 
     @Query(
-            """
+    """
         SELECT new backend.academy.scrapper.LinkWithTagsAndFilters(
             linkEntity.url,
             STRING_AGG((DISTINCT(tagEntity.name)), ' '),

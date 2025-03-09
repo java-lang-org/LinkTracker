@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
@@ -34,17 +37,19 @@ public class LinkService {
     ChatLinkFilterRepository chatLinkFilterRepository;
 
     @Transactional
-    public LinkEntity addLink(ChatEntity chatEntity, Link link) {
+    public LinkEntity addLink(ChatEntity chatEntity, Link link, List<String> tags, List<String> filters) {
         LinkEntity linkEntity = linkRepository.findByUrl(link.url()).orElseGet(() -> {
             LinkEntity newLinkEntity = new LinkEntity();
             newLinkEntity.url(link.url());
+            newLinkEntity.type(link.linkType());
+            newLinkEntity.lastUpdate(link.lastUpdate());
             return linkRepository.save(newLinkEntity);
         });
 
         saveChatLink(chatEntity, linkEntity);
-        tagService.addTags(link.tags()).forEach(tagEntity -> saveChatLinkTag(chatEntity, linkEntity, tagEntity));
+        tagService.addTags(tags).forEach(tagEntity -> saveChatLinkTag(chatEntity, linkEntity, tagEntity));
         filterService
-                .addFilters(link.filters())
+                .addFilters(filters)
                 .forEach(filterEntity -> saveChatLinkFilter(chatEntity, linkEntity, filterEntity));
 
         return linkEntity;
@@ -91,6 +96,12 @@ public class LinkService {
                 linkWithTagsAndFilters.orElseThrow().url(),
                 linkWithTagsAndFilters.orElseThrow().tags(),
                 linkWithTagsAndFilters.orElseThrow().filters()));
+    }
+
+    @Transactional
+    public Page<LinkSubscriptions> findAllLinkSubscriptions(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return chatLinkRepository.findAllLinkSubscriptions(pageable);
     }
 
     private void saveChatLink(ChatEntity chatEntity, LinkEntity linkEntity) {

@@ -1,11 +1,15 @@
 package backend.academy.scrapper.entity;
 
+import backend.academy.scrapper.LinkType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.ZonedDateTime;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -26,4 +30,11 @@ public class LinkEntity {
 
     @Column(name = "url", nullable = false, unique = true)
     private String url;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    private LinkType type;
+
+    @Column(name = "last_update", nullable = false)
+    private ZonedDateTime lastUpdate;
 }

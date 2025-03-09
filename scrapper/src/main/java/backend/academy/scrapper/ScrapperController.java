@@ -62,8 +62,9 @@ public class ScrapperController {
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<LinkResponse> addLinkTracking(
             @RequestHeader("Tg-Chat-Id") long tgChatId, @Valid @RequestBody AddLinkRequest addLinkRequest) {
-        Link link = Link.parse(addLinkRequest);
-        LinkResponse linkResponse = chatService.addLink(tgChatId, link);
+        Link link = Link.getInstance(addLinkRequest.url());
+        LinkResponse linkResponse =
+                chatService.addLink(tgChatId, link, addLinkRequest.tags(), addLinkRequest.filters());
         return ResponseEntity.ok().body(linkResponse);
     }
 

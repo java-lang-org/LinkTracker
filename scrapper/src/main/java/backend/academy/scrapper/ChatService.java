@@ -6,6 +6,7 @@ import backend.academy.scrapper.repository.ChatRepository;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -34,9 +35,9 @@ public class ChatService {
     }
 
     @Transactional
-    public LinkResponse addLink(long chatId, Link link) {
-        linkService.addLink(getChatEntityOrThrow(chatId), link);
-        return new LinkResponse(chatId, link.url(), link.tags(), link.filters());
+    public LinkResponse addLink(long chatId, Link link, List<String> tags, List<String> filters) {
+        linkService.addLink(getChatEntityOrThrow(chatId), link, tags, filters);
+        return new LinkResponse(chatId, link.url(), tags, filters);
     }
 
     @Transactional
@@ -46,8 +47,9 @@ public class ChatService {
                 .orElseThrow(() -> new ChatException(HttpStatus.NOT_FOUND, "Link doesn't exist."));
     }
 
-    public List<ChatLink> getLink2ChatIds() {
-        return List.of();
+    @Transactional
+    public Page<LinkSubscriptions> findAllLinkSubscriptions(int page, int size) {
+        return linkService.findAllLinkSubscriptions(page, size);
     }
 
     private void requireChatDoesNotExist(long chatId) {

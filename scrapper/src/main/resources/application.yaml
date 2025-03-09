@@ -1,8 +1,12 @@
 app:
   github-token: ${GITHUB_TOKEN}
+
   stackoverflow:
     key: ${SO_TOKEN_KEY}
     access-token: ${SO_ACCESS_TOKEN}
+
+  fixed-rate-string: 5000 # in milliseconds
+  batch-size: 500
 
 spring:
   application:
