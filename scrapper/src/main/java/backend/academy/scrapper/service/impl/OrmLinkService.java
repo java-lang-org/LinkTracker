@@ -1,6 +1,9 @@
-package backend.academy.scrapper;
+package backend.academy.scrapper.service.impl;
 
 import backend.academy.dto.LinkResponse;
+import backend.academy.scrapper.Link;
+import backend.academy.scrapper.LinkSubscriptions;
+import backend.academy.scrapper.LinkWithTagsAndFilters;
 import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.entity.ChatLinkEntity;
 import backend.academy.scrapper.entity.ChatLinkFilterEntity;
@@ -15,6 +18,9 @@ import backend.academy.scrapper.repository.ChatLinkFilterRepository;
 import backend.academy.scrapper.repository.ChatLinkRepository;
 import backend.academy.scrapper.repository.ChatLinkTagRepository;
 import backend.academy.scrapper.repository.LinkRepository;
+import backend.academy.scrapper.service.FilterService;
+import backend.academy.scrapper.service.LinkService;
+import backend.academy.scrapper.service.TagService;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
@@ -28,14 +34,15 @@ import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-public class LinkService {
-    LinkRepository linkRepository;
+public class OrmLinkService implements LinkService {
     TagService tagService;
     FilterService filterService;
+    LinkRepository linkRepository;
     ChatLinkRepository chatLinkRepository;
     ChatLinkTagRepository chatLinkTagRepository;
     ChatLinkFilterRepository chatLinkFilterRepository;
 
+    @Override
     @Transactional
     public LinkEntity addLink(ChatEntity chatEntity, Link link, List<String> tags, List<String> filters) {
         LinkEntity linkEntity = linkRepository.findByUrl(link.url()).orElseGet(() -> {
@@ -55,6 +62,7 @@ public class LinkService {
         return linkEntity;
     }
 
+    @Override
     @Transactional
     public void deleteChat(ChatEntity chatEntity) {
         chatLinkRepository.deleteByChatEntity(chatEntity);
@@ -64,6 +72,7 @@ public class LinkService {
         cleanupUnusedEntities();
     }
 
+    @Override
     @Transactional
     public List<LinkResponse> getLinks(ChatEntity chatEntity) {
         return chatLinkRepository.findLinksWithTagsAndFiltersByChatEntity(chatEntity).stream()
@@ -71,6 +80,7 @@ public class LinkService {
                 .toList();
     }
 
+    @Override
     @Transactional
     public Optional<LinkResponse> removeLink(ChatEntity chatEntity, String url) {
         Optional<LinkEntity> linkEntity = linkRepository.findByUrl(url);
@@ -98,6 +108,7 @@ public class LinkService {
                 linkWithTagsAndFilters.orElseThrow().filters()));
     }
 
+    @Override
     @Transactional
     public Page<LinkSubscriptions> findAllLinkSubscriptions(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
@@ -133,7 +144,7 @@ public class LinkService {
 
     private void cleanupUnusedEntities() {
         linkRepository.deleteUnusedLinks();
-        tagService.deleteUnused();
-        filterService.deleteUnused();
+        tagService.deleteUnusedTags();
+        filterService.deleteUnusedFilters();
     }
 }

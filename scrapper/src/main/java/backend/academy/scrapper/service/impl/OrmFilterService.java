@@ -1,7 +1,8 @@
-package backend.academy.scrapper;
+package backend.academy.scrapper.service.impl;
 
 import backend.academy.scrapper.entity.FilterEntity;
 import backend.academy.scrapper.repository.FilterRepository;
+import backend.academy.scrapper.service.FilterService;
 import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
@@ -10,16 +11,18 @@ import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-public class FilterService {
+public class OrmFilterService implements FilterService {
     FilterRepository filterRepository;
 
+    @Override
     @Transactional
     public List<FilterEntity> addFilters(List<String> filters) {
         return filters.stream().map(this::saveFilter).toList();
     }
 
+    @Override
     @Transactional
-    public void deleteUnused() {
+    public void deleteUnusedFilters() {
         filterRepository.deleteUnusedFilters();
     }
 

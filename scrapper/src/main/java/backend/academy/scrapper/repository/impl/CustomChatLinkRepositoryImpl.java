@@ -1,7 +1,8 @@
-package backend.academy.scrapper.repository;
+package backend.academy.scrapper.repository.impl;
 
 import backend.academy.scrapper.LinkSubscriptions;
 import backend.academy.scrapper.LinkType;
+import backend.academy.scrapper.repository.CustomChatLinkRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;

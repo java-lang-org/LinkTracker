@@ -1,20 +1,21 @@
-package backend.academy.scrapper;
+package backend.academy.scrapper.service.impl;
 
+import backend.academy.scrapper.Link;
 import backend.academy.scrapper.client.external.github.GitHubClient;
 import backend.academy.scrapper.client.external.stackoverflow.StackOverflowClient;
+import backend.academy.scrapper.service.LinkCheckerService;
 import java.util.Optional;
 import java.util.function.Function;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-@Slf4j
-public class LinkCheckerService {
+public class LinkCheckerServiceImpl implements LinkCheckerService {
     private final GitHubClient gitHubClient;
     private final StackOverflowClient stackOverflowClient;
 
+    @Override
     public Optional<String> checkLink(Link link) {
         return switch (link.linkType()) {
             case GITHUB -> checkSpecificLink(gitHubClient::hasUpdate, link);

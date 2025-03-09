@@ -1,5 +1,12 @@
-package backend.academy.scrapper;
+package backend.academy.scrapper.service.impl;
 
+import backend.academy.scrapper.Link;
+import backend.academy.scrapper.LinkSubscriptions;
+import backend.academy.scrapper.ScrapperConfig;
+import backend.academy.scrapper.service.ChatService;
+import backend.academy.scrapper.service.LinkCheckerService;
+import backend.academy.scrapper.service.NotificationSendingService;
+import backend.academy.scrapper.service.ScrapperService;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,12 +17,13 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 @Slf4j
-public class ScrapperService {
+public class ScrapperServiceImpl implements ScrapperService {
     private final ScrapperConfig scrapperConfig;
     private final ChatService chatService;
     private final LinkCheckerService linkCheckerService;
     private final NotificationSendingService notificationSendingService;
 
+    @Override
     @Scheduled(fixedRateString = "#{${app.fixed-rate-string}}")
     public void checkUpdates() {
         processDataInBatches();
@@ -24,8 +32,8 @@ public class ScrapperService {
     private void processDataInBatches() {
         int page = 0;
         while (true) {
-            Page<LinkSubscriptions> linkSubscriptionsPage =
-                    chatService.findAllLinkSubscriptions(page, scrapperConfig.batchSize());
+            Page<LinkSubscriptions> linkSubscriptionsPage = chatService.findAllLinkSubscriptions(
+                    page, scrapperConfig.dataBase().batchSize());
             if (linkSubscriptionsPage.isEmpty()) {
                 break;
             }

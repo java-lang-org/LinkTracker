@@ -6,7 +6,10 @@ app:
     access-token: ${SO_ACCESS_TOKEN}
 
   fixed-rate-string: 5000 # in milliseconds
-  batch-size: 500
+
+  data-base:
+    access-type: ORM
+    batch-size: 500
 
 spring:
   application:
