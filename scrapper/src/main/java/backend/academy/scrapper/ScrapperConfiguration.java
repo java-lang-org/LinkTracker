@@ -22,6 +22,7 @@ import backend.academy.scrapper.service.impl.SqlTagService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.client.RestClient;
 
 @Configuration
@@ -73,8 +74,8 @@ public class ScrapperConfiguration {
     }
 
     @Bean
-    public TagService tagService(TagRepository tagRepository) {
-        return dataBaseServiceFactory.getService(new SqlTagService(), new OrmTagService(tagRepository));
+    public TagService tagService(JdbcTemplate jdbcTemplate, TagRepository tagRepository) {
+        return dataBaseServiceFactory.getService(new SqlTagService(jdbcTemplate), new OrmTagService(tagRepository));
     }
 
     @Bean
