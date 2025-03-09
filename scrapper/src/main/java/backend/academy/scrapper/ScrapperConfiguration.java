@@ -79,7 +79,8 @@ public class ScrapperConfiguration {
     }
 
     @Bean
-    public FilterService filterService(FilterRepository filterRepository) {
-        return dataBaseServiceFactory.getService(new SqlFilterService(), new OrmFilterService(filterRepository));
+    public FilterService filterService(JdbcTemplate jdbcTemplate, FilterRepository filterRepository) {
+        return dataBaseServiceFactory.getService(
+                new SqlFilterService(jdbcTemplate), new OrmFilterService(filterRepository));
     }
 }
