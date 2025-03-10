@@ -21,20 +21,17 @@ import backend.academy.scrapper.repository.LinkRepository;
 import backend.academy.scrapper.service.FilterService;
 import backend.academy.scrapper.service.LinkService;
 import backend.academy.scrapper.service.TagService;
-import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-public class OrmLinkService implements LinkService {
+public class LinkServiceImpl implements LinkService {
     TagService tagService;
     FilterService filterService;
     LinkRepository linkRepository;
@@ -43,7 +40,6 @@ public class OrmLinkService implements LinkService {
     ChatLinkFilterRepository chatLinkFilterRepository;
 
     @Override
-    @Transactional
     public LinkEntity addLink(ChatEntity chatEntity, Link link, List<String> tags, List<String> filters) {
         LinkEntity linkEntity = linkRepository.findByUrl(link.url()).orElseGet(() -> {
             LinkEntity newLinkEntity = new LinkEntity();
@@ -63,7 +59,6 @@ public class OrmLinkService implements LinkService {
     }
 
     @Override
-    @Transactional
     public void deleteChat(ChatEntity chatEntity) {
         chatLinkRepository.deleteByChatEntity(chatEntity);
         chatLinkTagRepository.deleteByChatEntity(chatEntity);
@@ -73,7 +68,6 @@ public class OrmLinkService implements LinkService {
     }
 
     @Override
-    @Transactional
     public List<LinkResponse> getLinks(ChatEntity chatEntity) {
         return chatLinkRepository.findLinksWithTagsAndFiltersByChatEntity(chatEntity).stream()
                 .map(link -> new LinkResponse(chatEntity.id(), link.url(), link.tags(), link.filters()))
@@ -81,7 +75,6 @@ public class OrmLinkService implements LinkService {
     }
 
     @Override
-    @Transactional
     public Optional<LinkResponse> removeLink(ChatEntity chatEntity, String url) {
         Optional<LinkEntity> linkEntity = linkRepository.findByUrl(url);
         if (linkEntity.isEmpty()) {
@@ -109,7 +102,6 @@ public class OrmLinkService implements LinkService {
     }
 
     @Override
-    @Transactional
     public Page<LinkSubscriptions> findAllLinkSubscriptions(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return chatLinkRepository.findAllLinkSubscriptions(pageable);
@@ -117,28 +109,23 @@ public class OrmLinkService implements LinkService {
 
     private void saveChatLink(ChatEntity chatEntity, LinkEntity linkEntity) {
         ChatLinkId chatLinkId = new ChatLinkId(chatEntity.id(), linkEntity.id());
-        saveIfNotExists(chatLinkRepository, chatLinkId, () -> new ChatLinkEntity(chatLinkId, chatEntity, linkEntity));
+        if (!chatLinkRepository.existsById(chatLinkId)) {
+            chatLinkRepository.save(new ChatLinkEntity(chatLinkId, chatEntity, linkEntity));
+        }
     }
 
     private void saveChatLinkTag(ChatEntity chatEntity, LinkEntity linkEntity, TagEntity tagEntity) {
         ChatLinkTagId chatLinkTagId = new ChatLinkTagId(chatEntity.id(), linkEntity.id(), tagEntity.id());
-        saveIfNotExists(
-                chatLinkTagRepository,
-                chatLinkTagId,
-                () -> new ChatLinkTagEntity(chatLinkTagId, chatEntity, linkEntity, tagEntity));
+        if (!chatLinkTagRepository.existsById(chatLinkTagId)) {
+            chatLinkTagRepository.save(new ChatLinkTagEntity(chatLinkTagId, chatEntity, linkEntity, tagEntity));
+        }
     }
 
     private void saveChatLinkFilter(ChatEntity chatEntity, LinkEntity linkEntity, FilterEntity filterEntity) {
         ChatLinkFilterId chatLinkFilterId = new ChatLinkFilterId(chatEntity.id(), linkEntity.id(), filterEntity.id());
-        saveIfNotExists(
-                chatLinkFilterRepository,
-                chatLinkFilterId,
-                () -> new ChatLinkFilterEntity(chatLinkFilterId, chatEntity, linkEntity, filterEntity));
-    }
-
-    private <T, ID> void saveIfNotExists(JpaRepository<T, ID> repository, ID id, Supplier<T> entitySupplier) {
-        if (!repository.existsById(id)) {
-            repository.save(entitySupplier.get());
+        if (!chatLinkFilterRepository.existsById(chatLinkFilterId)) {
+            chatLinkFilterRepository.save(
+                    new ChatLinkFilterEntity(chatLinkFilterId, chatEntity, linkEntity, filterEntity));
         }
     }
 

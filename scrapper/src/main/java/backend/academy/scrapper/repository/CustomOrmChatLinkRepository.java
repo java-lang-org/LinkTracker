@@ -4,6 +4,6 @@ import backend.academy.scrapper.LinkSubscriptions;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-public interface CustomChatLinkRepository {
+public interface CustomOrmChatLinkRepository {
     Page<LinkSubscriptions> findAllLinkSubscriptions(Pageable pageable);
 }

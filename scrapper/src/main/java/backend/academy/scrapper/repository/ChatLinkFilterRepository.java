@@ -4,10 +4,13 @@ import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.entity.ChatLinkFilterEntity;
 import backend.academy.scrapper.entity.ChatLinkFilterId;
 import backend.academy.scrapper.entity.LinkEntity;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 
-public interface ChatLinkFilterRepository extends JpaRepository<ChatLinkFilterEntity, ChatLinkFilterId> {
+public interface ChatLinkFilterRepository {
+    boolean existsById(ChatLinkFilterId chatLinkFilterId);
+
+    ChatLinkFilterEntity save(ChatLinkFilterEntity chatLinkFilterEntity);
+
     @Modifying
     void deleteByChatEntity(ChatEntity chatEntity);
 

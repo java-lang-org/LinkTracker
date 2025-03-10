@@ -3,7 +3,6 @@ package backend.academy.scrapper.service.impl;
 import backend.academy.scrapper.entity.TagEntity;
 import backend.academy.scrapper.repository.TagRepository;
 import backend.academy.scrapper.service.TagService;
-import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -11,17 +10,15 @@ import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-public class OrmTagService implements TagService {
+public class TagServiceImpl implements TagService {
     private TagRepository tagRepository;
 
     @Override
-    @Transactional
     public List<TagEntity> addTags(List<String> tags) {
         return tags.stream().map(this::saveTag).toList();
     }
 
     @Override
-    @Transactional
     public void deleteUnusedTags() {
         tagRepository.deleteUnusedTags();
     }

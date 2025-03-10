@@ -7,29 +7,31 @@ import backend.academy.scrapper.repository.ChatRepository;
 import backend.academy.scrapper.repository.FilterRepository;
 import backend.academy.scrapper.repository.LinkRepository;
 import backend.academy.scrapper.repository.TagRepository;
-import backend.academy.scrapper.service.ChatService;
-import backend.academy.scrapper.service.FilterService;
-import backend.academy.scrapper.service.LinkService;
-import backend.academy.scrapper.service.TagService;
-import backend.academy.scrapper.service.impl.OrmChatService;
-import backend.academy.scrapper.service.impl.OrmFilterService;
-import backend.academy.scrapper.service.impl.OrmLinkService;
-import backend.academy.scrapper.service.impl.OrmTagService;
-import backend.academy.scrapper.service.impl.SqlChatService;
-import backend.academy.scrapper.service.impl.SqlFilterService;
-import backend.academy.scrapper.service.impl.SqlLinkService;
-import backend.academy.scrapper.service.impl.SqlTagService;
+import backend.academy.scrapper.repository.impl.OrmChatLinkFilterRepository;
+import backend.academy.scrapper.repository.impl.OrmChatLinkRepository;
+import backend.academy.scrapper.repository.impl.OrmChatLinkTagRepository;
+import backend.academy.scrapper.repository.impl.OrmChatRepository;
+import backend.academy.scrapper.repository.impl.OrmFilterRepository;
+import backend.academy.scrapper.repository.impl.OrmLinkRepository;
+import backend.academy.scrapper.repository.impl.OrmTagRepository;
+import backend.academy.scrapper.repository.impl.SqlChatLinkFilterRepository;
+import backend.academy.scrapper.repository.impl.SqlChatLinkRepository;
+import backend.academy.scrapper.repository.impl.SqlChatLinkTagRepository;
+import backend.academy.scrapper.repository.impl.SqlChatRepository;
+import backend.academy.scrapper.repository.impl.SqlFilterRepository;
+import backend.academy.scrapper.repository.impl.SqlLinkRepository;
+import backend.academy.scrapper.repository.impl.SqlTagRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.web.client.RestClient;
 
 @Configuration
 @AllArgsConstructor
 public class ScrapperConfiguration {
     ScrapperConfig scrapperConfig;
-    DataBaseServiceFactory dataBaseServiceFactory;
+    DataBaseRepositoryFactory dataBaseRepositoryFactory;
 
     @Bean(name = "gitHubRestClient")
     public RestClient gitHubRestClient() {
@@ -50,37 +52,41 @@ public class ScrapperConfiguration {
     }
 
     @Bean
-    public ChatService chatService(ChatRepository chatRepository, LinkService linkService) {
-        return dataBaseServiceFactory.getService(new SqlChatService(), new OrmChatService(chatRepository, linkService));
+    public ChatRepository chatRepository(JdbcClient jdbcClient, OrmChatRepository ormChatRepository) {
+        return dataBaseRepositoryFactory.getRepository(new SqlChatRepository(jdbcClient), ormChatRepository);
     }
 
     @Bean
-    public LinkService linkService(
-            TagService tagService,
-            FilterService filterService,
-            LinkRepository linkRepository,
-            ChatLinkRepository chatLinkRepository,
-            ChatLinkTagRepository chatLinkTagRepository,
-            ChatLinkFilterRepository chatLinkFilterRepository) {
-        return dataBaseServiceFactory.getService(
-                new SqlLinkService(),
-                new OrmLinkService(
-                        tagService,
-                        filterService,
-                        linkRepository,
-                        chatLinkRepository,
-                        chatLinkTagRepository,
-                        chatLinkFilterRepository));
+    LinkRepository linkRepository(JdbcClient jdbcClient, OrmLinkRepository ormLinkRepository) {
+        return dataBaseRepositoryFactory.getRepository(new SqlLinkRepository(jdbcClient), ormLinkRepository);
     }
 
     @Bean
-    public TagService tagService(JdbcTemplate jdbcTemplate, TagRepository tagRepository) {
-        return dataBaseServiceFactory.getService(new SqlTagService(jdbcTemplate), new OrmTagService(tagRepository));
+    TagRepository tagRepository(JdbcClient jdbcClient, OrmTagRepository ormTagRepository) {
+        return dataBaseRepositoryFactory.getRepository(new SqlTagRepository(jdbcClient), ormTagRepository);
     }
 
     @Bean
-    public FilterService filterService(JdbcTemplate jdbcTemplate, FilterRepository filterRepository) {
-        return dataBaseServiceFactory.getService(
-                new SqlFilterService(jdbcTemplate), new OrmFilterService(filterRepository));
+    FilterRepository filterRepository(JdbcClient jdbcClient, OrmFilterRepository ormFilterRepository) {
+        return dataBaseRepositoryFactory.getRepository(new SqlFilterRepository(jdbcClient), ormFilterRepository);
+    }
+
+    @Bean
+    ChatLinkRepository chatLinkRepository(JdbcClient jdbcClient, OrmChatLinkRepository ormChatLinkRepository) {
+        return dataBaseRepositoryFactory.getRepository(new SqlChatLinkRepository(jdbcClient), ormChatLinkRepository);
+    }
+
+    @Bean
+    ChatLinkTagRepository chatLinkTagRepository(
+            JdbcClient jdbcClient, OrmChatLinkTagRepository ormChatLinkTagRepository) {
+        return dataBaseRepositoryFactory.getRepository(
+                new SqlChatLinkTagRepository(jdbcClient), ormChatLinkTagRepository);
+    }
+
+    @Bean
+    ChatLinkFilterRepository chatLinkFilterRepository(
+            JdbcClient jdbcClient, OrmChatLinkFilterRepository ormChatLinkFilterRepository) {
+        return dataBaseRepositoryFactory.getRepository(
+                new SqlChatLinkFilterRepository(jdbcClient), ormChatLinkFilterRepository);
     }
 }

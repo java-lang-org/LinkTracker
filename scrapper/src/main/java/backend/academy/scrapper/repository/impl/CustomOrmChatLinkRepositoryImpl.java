@@ -2,7 +2,7 @@ package backend.academy.scrapper.repository.impl;
 
 import backend.academy.scrapper.LinkSubscriptions;
 import backend.academy.scrapper.LinkType;
-import backend.academy.scrapper.repository.CustomChatLinkRepository;
+import backend.academy.scrapper.repository.CustomOrmChatLinkRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -13,13 +13,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-public class CustomChatLinkRepositoryImpl implements CustomChatLinkRepository {
+public class CustomOrmChatLinkRepositoryImpl implements CustomOrmChatLinkRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
     @Override
+    @Transactional
     public Page<LinkSubscriptions> findAllLinkSubscriptions(Pageable pageable) {
         String query =
                 """

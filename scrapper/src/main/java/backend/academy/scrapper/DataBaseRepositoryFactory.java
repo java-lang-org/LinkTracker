@@ -5,13 +5,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
-public class DataBaseServiceFactory {
+public class DataBaseRepositoryFactory {
     private final ScrapperConfig scrapperConfig;
 
-    public <T> T getService(T sqlService, T ormService) {
+    public <T> T getRepository(T sqlRepository, T ormRepository) {
         return switch (scrapperConfig.dataBase().accessType()) {
-            case SQL -> sqlService;
-            case ORM -> ormService;
+            case SQL -> sqlRepository;
+            case ORM -> ormRepository;
         };
     }
 }

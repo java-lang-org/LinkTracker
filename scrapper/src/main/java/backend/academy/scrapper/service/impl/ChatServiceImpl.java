@@ -7,7 +7,6 @@ import backend.academy.scrapper.LinkSubscriptions;
 import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.repository.ChatRepository;
 import backend.academy.scrapper.service.LinkService;
-import jakarta.transaction.Transactional;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -16,19 +15,17 @@ import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-public class OrmChatService implements backend.academy.scrapper.service.ChatService {
+public class ChatServiceImpl implements backend.academy.scrapper.service.ChatService {
     private final ChatRepository chatRepository;
     private final LinkService linkService;
 
     @Override
-    @Transactional
     public void registerChat(long chatId) {
         requireChatDoesNotExist(chatId);
         chatRepository.save(new ChatEntity(chatId));
     }
 
     @Override
-    @Transactional
     public void deleteChat(long chatId) {
         ChatEntity chatEntity = getChatEntityOrThrow(chatId);
         linkService.deleteChat(chatEntity);
@@ -36,20 +33,17 @@ public class OrmChatService implements backend.academy.scrapper.service.ChatServ
     }
 
     @Override
-    @Transactional
     public List<LinkResponse> getLinks(long chatId) {
         return linkService.getLinks(getChatEntityOrThrow(chatId));
     }
 
     @Override
-    @Transactional
     public LinkResponse addLink(long chatId, Link link, List<String> tags, List<String> filters) {
         linkService.addLink(getChatEntityOrThrow(chatId), link, tags, filters);
         return new LinkResponse(chatId, link.url(), tags, filters);
     }
 
     @Override
-    @Transactional
     public LinkResponse removeLink(long chatId, String url) {
         return linkService
                 .removeLink(getChatEntityOrThrow(chatId), url)
@@ -57,7 +51,6 @@ public class OrmChatService implements backend.academy.scrapper.service.ChatServ
     }
 
     @Override
-    @Transactional
     public Page<LinkSubscriptions> findAllLinkSubscriptions(int page, int size) {
         return linkService.findAllLinkSubscriptions(page, size);
     }
