@@ -11,6 +11,7 @@ import io.lettuce.core.dynamic.annotation.Param;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,5 +72,26 @@ public interface OrmChatLinkRepository
     GROUP BY linkEntity.url
 """)
     Optional<LinkWithTagsAndFilters> findLinkWithTagsAndFiltersByChatEntityAndLinkEntity(
+            @Param("chatEntity") ChatEntity chatEntity, @Param("linkEntity") LinkEntity linkEntity);
+
+    @Override
+    @Transactional
+    @Modifying
+    @Query(
+            """
+    DELETE FROM ChatLinkEntity chatLinkEntity
+    WHERE chatLinkEntity.chatEntity.id = :#{#chatEntity.id}
+""")
+    void deleteByChatEntity(@Param("chatEntity") ChatEntity chatEntity);
+
+    @Override
+    @Transactional
+    @Modifying
+    @Query(
+            """
+    DELETE FROM ChatLinkEntity chatLinkEntity
+    WHERE chatLinkEntity.chatEntity.id = :#{#chatEntity.id} AND chatLinkEntity.linkEntity.id = :#{#linkEntity.id}
+""")
+    void deleteByChatEntityAndLinkEntity(
             @Param("chatEntity") ChatEntity chatEntity, @Param("linkEntity") LinkEntity linkEntity);
 }

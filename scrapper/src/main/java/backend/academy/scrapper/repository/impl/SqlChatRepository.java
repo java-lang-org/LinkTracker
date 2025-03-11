@@ -4,7 +4,6 @@ import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.repository.ChatRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,8 +21,6 @@ public class SqlChatRepository implements ChatRepository {
 
     private final JdbcClient jdbcClient;
 
-    private final RowMapper<ChatEntity> rowMapper = (rs, rowNum) -> new ChatEntity(rs.getLong("id"));
-
     @Override
     @Transactional
     public boolean existsById(Long id) {
@@ -37,7 +34,11 @@ public class SqlChatRepository implements ChatRepository {
     @Override
     @Transactional
     public Optional<ChatEntity> findById(Long id) {
-        return jdbcClient.sql(FIND_BY_ID_SQL).param("id", id).query(rowMapper).optional();
+        return jdbcClient
+                .sql(FIND_BY_ID_SQL)
+                .param("id", id)
+                .query(ChatEntity.class)
+                .optional();
     }
 
     @Override
@@ -46,7 +47,7 @@ public class SqlChatRepository implements ChatRepository {
         return jdbcClient
                 .sql(INSERT_SQL)
                 .param("id", chatEntity.id())
-                .query(rowMapper)
+                .query(ChatEntity.class)
                 .single();
     }
 

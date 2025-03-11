@@ -34,7 +34,7 @@ public class ScrapperServiceImpl implements ScrapperService {
         while (true) {
             Page<LinkSubscriptions> linkSubscriptionsPage = chatService.findAllLinkSubscriptions(
                     page, scrapperConfig.dataBase().batchSize());
-            if (linkSubscriptionsPage.isEmpty()) {
+            if (linkSubscriptionsPage == null || linkSubscriptionsPage.isEmpty()) {
                 break;
             }
 

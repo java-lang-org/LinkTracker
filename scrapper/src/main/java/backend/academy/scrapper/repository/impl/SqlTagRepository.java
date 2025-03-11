@@ -5,7 +5,6 @@ import backend.academy.scrapper.repository.TagRepository;
 import jakarta.transaction.Transactional;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -23,16 +22,13 @@ public class SqlTagRepository implements TagRepository {
 
     private final JdbcClient jdbcClient;
 
-    private final RowMapper<TagEntity> rowMapper =
-            (rs, rowNum) -> new TagEntity(rs.getLong("id"), rs.getString("name"));
-
     @Override
     @Transactional
     public Optional<TagEntity> findByName(String name) {
         return jdbcClient
                 .sql(FIND_BY_NAME_SQL)
                 .param("name", name)
-                .query(rowMapper)
+                .query(TagEntity.class)
                 .optional();
     }
 
@@ -42,7 +38,7 @@ public class SqlTagRepository implements TagRepository {
         return jdbcClient
                 .sql(INSERT_SQL)
                 .param("name", tagEntity.name())
-                .query(rowMapper)
+                .query(TagEntity.class)
                 .single();
     }
 

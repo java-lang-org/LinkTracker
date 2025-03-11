@@ -54,7 +54,7 @@ public class SqlLinkRepository implements LinkRepository {
                 .sql(INSERT_SQL)
                 .param("url", linkEntity.url())
                 .param("type", linkEntity.type().name())
-                .param("last_update", linkEntity.lastUpdate())
+                .param("last_update", linkEntity.lastUpdate().toOffsetDateTime())
                 .query(rowMapper)
                 .single();
     }

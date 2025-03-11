@@ -4,7 +4,6 @@ import backend.academy.scrapper.entity.FilterEntity;
 import backend.academy.scrapper.repository.FilterRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,9 +28,6 @@ public class SqlFilterRepository implements FilterRepository {
 
     private final JdbcClient jdbcClient;
 
-    private final RowMapper<FilterEntity> rowMapper =
-            (rs, rowNum) -> new FilterEntity(rs.getLong("id"), rs.getString("name"), rs.getString("pattern"));
-
     @Override
     @Transactional
     public Optional<FilterEntity> findByNameAndPattern(String name, String pattern) {
@@ -39,7 +35,7 @@ public class SqlFilterRepository implements FilterRepository {
                 .sql(FIND_BY_NAME_AND_PATTEN_SQL)
                 .param("name", name)
                 .param("pattern", pattern)
-                .query(rowMapper)
+                .query(FilterEntity.class)
                 .optional();
     }
 
@@ -49,7 +45,7 @@ public class SqlFilterRepository implements FilterRepository {
         return jdbcClient
                 .sql(INSERT_SQL)
                 .params(filterEntity.name(), filterEntity.pattern())
-                .query(rowMapper)
+                .query(FilterEntity.class)
                 .single();
     }
 
