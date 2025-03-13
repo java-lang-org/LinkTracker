@@ -10,10 +10,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
+@Transactional
 class LinkRepositoryTest {
     @Autowired
     private LinkRepository linkRepository;
@@ -39,7 +41,7 @@ class LinkRepositoryTest {
     }
 
     @Test
-    void shouldUpdateLastUpdateTime() {
+    void shouldUpdateLastUpdateTime() throws InterruptedException {
         // Arrange
         String url = "https://github.com/owner/repo";
         LinkEntity linkEntity = new LinkEntity();
@@ -47,7 +49,10 @@ class LinkRepositoryTest {
         linkEntity.type(LinkType.GITHUB);
         linkEntity.lastUpdate(DateTimeUtils.now());
 
+        linkRepository.save(linkEntity);
+
         // Act
+        Thread.sleep(5000);
         ZonedDateTime newTime = DateTimeUtils.now();
         linkRepository.updateLastUpdateByUrl(url, newTime);
 
@@ -64,6 +69,8 @@ class LinkRepositoryTest {
         linkEntity.url(url);
         linkEntity.type(LinkType.GITHUB);
         linkEntity.lastUpdate(DateTimeUtils.now());
+
+        linkRepository.save(linkEntity);
 
         // Act
         linkRepository.deleteUnusedLinks();
