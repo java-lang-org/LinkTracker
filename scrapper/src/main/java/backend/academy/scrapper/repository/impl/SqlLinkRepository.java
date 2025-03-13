@@ -68,7 +68,7 @@ public class SqlLinkRepository implements LinkRepository {
         jdbcClient
                 .sql(UPDATE_SQL)
                 .param("url", url)
-                .param("last_update", lastUpdate)
+                .param("last_update", lastUpdate.toOffsetDateTime())
                 .update();
     }
 

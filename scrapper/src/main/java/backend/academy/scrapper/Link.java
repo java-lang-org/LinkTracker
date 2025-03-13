@@ -18,7 +18,7 @@ public class Link {
     private ZonedDateTime lastUpdate;
 
     public static Link getInstance(String url) {
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = DateTimeUtils.now();
         return UrlValidator.isValidGitHubUrl(url)
                 .map(uri -> new Link(url, uri, LinkType.GITHUB, now))
                 .or(() -> UrlValidator.isValidStackOverflowUrl(url)

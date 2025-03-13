@@ -5,10 +5,10 @@ app:
     key: ${SO_TOKEN_KEY}
     access-token: ${SO_ACCESS_TOKEN}
 
-  fixed-rate-string: 5000 # in milliseconds
+  fixed-rate-string: 60_000 # in milliseconds
 
   data-base:
-    access-type: ORM
+    access-type: SQL
     batch-size: 500
 
 spring:
@@ -29,8 +29,8 @@ spring:
     hibernate:
       ddl-auto: validate
     properties:
-      hibernate.format_sql: true
       hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+      hibernate.format_sql: true
     open-in-view: false
 
 logging:
