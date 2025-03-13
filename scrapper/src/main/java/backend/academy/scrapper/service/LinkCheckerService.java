@@ -1,8 +1,8 @@
 package backend.academy.scrapper.service;
 
 import backend.academy.scrapper.Link;
-import java.util.Optional;
+import java.util.List;
 
 public interface LinkCheckerService {
-    Optional<String> checkLink(Link link);
+    List<String> checkLink(Link link);
 }

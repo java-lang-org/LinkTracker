@@ -4,7 +4,7 @@ import backend.academy.scrapper.Link;
 import backend.academy.scrapper.client.external.github.GitHubClient;
 import backend.academy.scrapper.client.external.stackoverflow.StackOverflowClient;
 import backend.academy.scrapper.service.LinkCheckerService;
-import java.util.Optional;
+import java.util.List;
 import java.util.function.Function;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,14 +16,14 @@ public class LinkCheckerServiceImpl implements LinkCheckerService {
     private final StackOverflowClient stackOverflowClient;
 
     @Override
-    public Optional<String> checkLink(Link link) {
+    public List<String> checkLink(Link link) {
         return switch (link.linkType()) {
-            case GITHUB -> checkSpecificLink(gitHubClient::hasUpdate, link);
-            case STACK_OVERFLOW -> checkSpecificLink(stackOverflowClient::hasUpdate, link);
+            case GITHUB -> checkSpecificLink(gitHubClient::getRecentEvents, link);
+            case STACK_OVERFLOW -> checkSpecificLink(stackOverflowClient::getRecentEvents, link);
         };
     }
 
-    private Optional<String> checkSpecificLink(Function<Link, Boolean> function, Link link) {
-        return function.apply(link) ? Optional.of("...") : Optional.empty();
+    private List<String> checkSpecificLink(Function<Link, List<String>> function, Link link) {
+        return function.apply(link);
     }
 }
