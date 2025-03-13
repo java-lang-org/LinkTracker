@@ -7,6 +7,7 @@ import backend.academy.scrapper.LinkSubscriptions;
 import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.repository.ChatRepository;
 import backend.academy.scrapper.service.LinkService;
+import java.time.ZonedDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -53,6 +54,11 @@ public class ChatServiceImpl implements backend.academy.scrapper.service.ChatSer
     @Override
     public Page<LinkSubscriptions> findAllLinkSubscriptions(int page, int size) {
         return linkService.findAllLinkSubscriptions(page, size);
+    }
+
+    @Override
+    public void updateLastUpdateByUrl(String url, ZonedDateTime lastUpdate) {
+        linkService.updateLastUpdateByUrl(url, lastUpdate);
     }
 
     private void requireChatDoesNotExist(long chatId) {

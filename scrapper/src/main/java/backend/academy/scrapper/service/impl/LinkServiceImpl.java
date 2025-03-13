@@ -21,6 +21,7 @@ import backend.academy.scrapper.repository.LinkRepository;
 import backend.academy.scrapper.service.FilterService;
 import backend.academy.scrapper.service.LinkService;
 import backend.academy.scrapper.service.TagService;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -105,6 +106,11 @@ public class LinkServiceImpl implements LinkService {
     public Page<LinkSubscriptions> findAllLinkSubscriptions(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return chatLinkRepository.findAllLinkSubscriptions(pageable);
+    }
+
+    @Override
+    public void updateLastUpdateByUrl(String url, ZonedDateTime lastUpdate) {
+        linkRepository.updateLastUpdateByUrl(url, lastUpdate);
     }
 
     private void saveChatLink(ChatEntity chatEntity, LinkEntity linkEntity) {

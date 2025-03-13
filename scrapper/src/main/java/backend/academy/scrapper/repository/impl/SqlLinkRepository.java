@@ -4,6 +4,7 @@ import backend.academy.scrapper.LinkType;
 import backend.academy.scrapper.entity.LinkEntity;
 import backend.academy.scrapper.repository.LinkRepository;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.EnumUtils;
@@ -23,6 +24,8 @@ public class SqlLinkRepository implements LinkRepository {
         VALUES (:url, :type, :last_update)
         RETURNING id, url, type, last_update
     """;
+
+    private static final String UPDATE_SQL = "UPDATE link SET last_update = :last_update WHERE url = :url";
 
     private static final String DELETE_UNUSED_SQL =
             """
@@ -57,6 +60,16 @@ public class SqlLinkRepository implements LinkRepository {
                 .param("last_update", linkEntity.lastUpdate().toOffsetDateTime())
                 .query(rowMapper)
                 .single();
+    }
+
+    @Override
+    @Transactional
+    public void updateLastUpdateByUrl(String url, ZonedDateTime lastUpdate) {
+        jdbcClient
+                .sql(UPDATE_SQL)
+                .param("url", url)
+                .param("last_update", lastUpdate)
+                .update();
     }
 
     @Override

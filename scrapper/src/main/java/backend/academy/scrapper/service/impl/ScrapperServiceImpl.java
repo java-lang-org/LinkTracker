@@ -60,7 +60,7 @@ public class ScrapperServiceImpl implements ScrapperService {
 
         List<String> descriptions = linkCheckerService.checkLink(link);
         if (!descriptions.isEmpty()) {
-            // TODO: update link info
+            chatService.updateLastUpdateByUrl(link.url(), link.lastUpdate());
         }
         descriptions.forEach(description -> notificationSendingService.sendNotification(link, description, chatIds));
     }
