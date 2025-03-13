@@ -13,8 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 public interface OrmLinkRepository extends LinkRepository, JpaRepository<LinkEntity, Long> {
     @Override
-    @Modifying
     @Transactional
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE LinkEntity linkEntity SET linkEntity.lastUpdate = :lastUpdate WHERE linkEntity.url = :url")
     void updateLastUpdateByUrl(@Param("url") String url, @Param("lastUpdate") ZonedDateTime lastUpdate);
 
