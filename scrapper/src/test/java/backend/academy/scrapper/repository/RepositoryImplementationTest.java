@@ -2,10 +2,12 @@ package backend.academy.scrapper.repository;
 
 import backend.academy.scrapper.ScrapperConfig;
 import backend.academy.scrapper.TestcontainersConfiguration;
+import backend.academy.scrapper.repository.impl.OrmChatLinkRepository;
 import backend.academy.scrapper.repository.impl.OrmChatRepository;
 import backend.academy.scrapper.repository.impl.OrmFilterRepository;
 import backend.academy.scrapper.repository.impl.OrmLinkRepository;
 import backend.academy.scrapper.repository.impl.OrmTagRepository;
+import backend.academy.scrapper.repository.impl.SqlChatLinkRepository;
 import backend.academy.scrapper.repository.impl.SqlChatRepository;
 import backend.academy.scrapper.repository.impl.SqlFilterRepository;
 import backend.academy.scrapper.repository.impl.SqlLinkRepository;
@@ -34,6 +36,9 @@ class RepositoryImplementationTest {
     @Autowired
     private FilterRepository filterRepository;
 
+    @Autowired
+    private ChatLinkRepository chatLinkRepository;
+
     @Test
     void shouldUseCorrectImplementation() {
         // Arrange
@@ -46,12 +51,14 @@ class RepositoryImplementationTest {
                 assertThat(linkRepository instanceof SqlLinkRepository).isTrue();
                 assertThat(tagRepository instanceof SqlTagRepository).isTrue();
                 assertThat(filterRepository instanceof SqlFilterRepository).isTrue();
+                assertThat(chatLinkRepository instanceof SqlChatLinkRepository).isTrue();
             }
             case ORM -> {
                 assertThat(chatRepository instanceof OrmChatRepository).isTrue();
                 assertThat(linkRepository instanceof OrmLinkRepository).isTrue();
                 assertThat(tagRepository instanceof OrmTagRepository).isTrue();
                 assertThat(filterRepository instanceof OrmFilterRepository).isTrue();
+                assertThat(chatLinkRepository instanceof OrmChatLinkRepository).isTrue();
             }
         }
     }
