@@ -1,5 +1,7 @@
 package backend.academy.scrapper.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import backend.academy.scrapper.ScrapperConfig;
 import backend.academy.scrapper.TestcontainersConfiguration;
 import backend.academy.scrapper.repository.impl.OrmChatLinkRepository;
@@ -16,7 +18,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
@@ -42,7 +43,8 @@ class RepositoryImplementationTest {
     @Test
     void shouldUseCorrectImplementation() {
         // Arrange
-        ScrapperConfig.DataBase.AccessType accessType = scrapperConfig.dataBase().accessType();
+        ScrapperConfig.DataBase.AccessType accessType =
+                scrapperConfig.dataBase().accessType();
 
         // Act & Assert
         switch (accessType) {

@@ -1,5 +1,7 @@
 package backend.academy.scrapper.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import backend.academy.scrapper.DateTimeUtils;
 import backend.academy.scrapper.LinkType;
 import backend.academy.scrapper.TestcontainersConfiguration;
@@ -11,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
@@ -35,9 +36,9 @@ class LinkRepositoryTest {
 
         // Assert
         assertThat(foundLinkEntity).isPresent();
-        assertThat(foundLinkEntity.get().url()).isEqualTo(savedLinkEntity.url());
-        assertThat(foundLinkEntity.get().type()).isEqualTo(savedLinkEntity.type());
-        assertThat(foundLinkEntity.get().lastUpdate()).isEqualTo(savedLinkEntity.lastUpdate());
+        assertThat(foundLinkEntity.orElseThrow().url()).isEqualTo(savedLinkEntity.url());
+        assertThat(foundLinkEntity.orElseThrow().type()).isEqualTo(savedLinkEntity.type());
+        assertThat(foundLinkEntity.orElseThrow().lastUpdate()).isEqualTo(savedLinkEntity.lastUpdate());
     }
 
     @Test
@@ -52,12 +53,14 @@ class LinkRepositoryTest {
         linkRepository.save(linkEntity);
 
         // Act
-        Thread.sleep(5000);
+        Thread.sleep(1000);
         ZonedDateTime newTime = DateTimeUtils.now();
         linkRepository.updateLastUpdateByUrl(url, newTime);
 
         // Assert
         LinkEntity updatedLink = linkRepository.findByUrl(url).orElseThrow();
+        assertThat(updatedLink.url()).isEqualTo(linkEntity.url());
+        assertThat(updatedLink.type()).isEqualTo(linkEntity.type());
         assertThat(updatedLink.lastUpdate()).isEqualTo(newTime);
     }
 

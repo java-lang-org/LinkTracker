@@ -1,5 +1,7 @@
 package backend.academy.scrapper.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import backend.academy.scrapper.TestcontainersConfiguration;
 import backend.academy.scrapper.entity.TagEntity;
 import java.util.Optional;
@@ -8,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
@@ -30,7 +31,7 @@ class TagRepositoryTest {
 
         // Assert
         assertThat(foundTagEntity).isPresent();
-        assertThat(foundTagEntity.get().name()).isEqualTo(savedTagEntity.name());
+        assertThat(foundTagEntity.orElseThrow().name()).isEqualTo(savedTagEntity.name());
     }
 
     @Test

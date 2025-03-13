@@ -1,5 +1,7 @@
 package backend.academy.scrapper.repository;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import backend.academy.scrapper.TestcontainersConfiguration;
 import backend.academy.scrapper.entity.FilterEntity;
 import java.util.Optional;
@@ -8,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
@@ -32,8 +33,8 @@ class FilterRepositoryTest {
 
         // Assert
         assertThat(foundFilterEntity).isPresent();
-        assertThat(foundFilterEntity.get().name()).isEqualTo(savedFilterEntity.name());
-        assertThat(foundFilterEntity.get().pattern()).isEqualTo(savedFilterEntity.pattern());
+        assertThat(foundFilterEntity.orElseThrow().name()).isEqualTo(savedFilterEntity.name());
+        assertThat(foundFilterEntity.orElseThrow().pattern()).isEqualTo(savedFilterEntity.pattern());
     }
 
     @Test
