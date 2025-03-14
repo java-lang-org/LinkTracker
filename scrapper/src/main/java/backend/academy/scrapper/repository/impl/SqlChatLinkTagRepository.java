@@ -52,7 +52,11 @@ public class SqlChatLinkTagRepository implements ChatLinkTagRepository {
                 .param("chatId", chatLinkTagEntity.chatEntity().id())
                 .param("linkId", chatLinkTagEntity.linkEntity().id())
                 .param("tagId", chatLinkTagEntity.tagEntity().id())
-                .query(ChatLinkTagEntity.class)
+                .query((rs, rowNum) -> new ChatLinkTagEntity(
+                        new ChatLinkTagId(rs.getLong("chat_id"), rs.getLong("link_id"), rs.getLong("tag_id")),
+                        chatLinkTagEntity.chatEntity(),
+                        chatLinkTagEntity.linkEntity(),
+                        chatLinkTagEntity.tagEntity()))
                 .single();
     }
 

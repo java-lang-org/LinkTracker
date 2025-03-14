@@ -5,11 +5,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import backend.academy.scrapper.ScrapperConfig;
 import backend.academy.scrapper.TestcontainersConfiguration;
 import backend.academy.scrapper.repository.impl.OrmChatLinkRepository;
+import backend.academy.scrapper.repository.impl.OrmChatLinkTagRepository;
 import backend.academy.scrapper.repository.impl.OrmChatRepository;
 import backend.academy.scrapper.repository.impl.OrmFilterRepository;
 import backend.academy.scrapper.repository.impl.OrmLinkRepository;
 import backend.academy.scrapper.repository.impl.OrmTagRepository;
 import backend.academy.scrapper.repository.impl.SqlChatLinkRepository;
+import backend.academy.scrapper.repository.impl.SqlChatLinkTagRepository;
 import backend.academy.scrapper.repository.impl.SqlChatRepository;
 import backend.academy.scrapper.repository.impl.SqlFilterRepository;
 import backend.academy.scrapper.repository.impl.SqlLinkRepository;
@@ -40,6 +42,9 @@ class RepositoryImplementationTest {
     @Autowired
     private ChatLinkRepository chatLinkRepository;
 
+    @Autowired
+    private ChatLinkTagRepository chatLinkTagRepository;
+
     @Test
     void shouldUseCorrectImplementation() {
         // Arrange
@@ -54,6 +59,8 @@ class RepositoryImplementationTest {
                 assertThat(tagRepository instanceof SqlTagRepository).isTrue();
                 assertThat(filterRepository instanceof SqlFilterRepository).isTrue();
                 assertThat(chatLinkRepository instanceof SqlChatLinkRepository).isTrue();
+                assertThat(chatLinkTagRepository instanceof SqlChatLinkTagRepository)
+                        .isTrue();
             }
             case ORM -> {
                 assertThat(chatRepository instanceof OrmChatRepository).isTrue();
@@ -61,6 +68,8 @@ class RepositoryImplementationTest {
                 assertThat(tagRepository instanceof OrmTagRepository).isTrue();
                 assertThat(filterRepository instanceof OrmFilterRepository).isTrue();
                 assertThat(chatLinkRepository instanceof OrmChatLinkRepository).isTrue();
+                assertThat(chatLinkTagRepository instanceof OrmChatLinkTagRepository)
+                        .isTrue();
             }
         }
     }
