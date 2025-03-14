@@ -52,7 +52,11 @@ public class SqlChatLinkFilterRepository implements ChatLinkFilterRepository {
                 .param("chatId", chatLinkFilterEntity.id().chatId())
                 .param("linkId", chatLinkFilterEntity.id().linkId())
                 .param("filterId", chatLinkFilterEntity.id().filterId())
-                .query(ChatLinkFilterEntity.class)
+                .query((rs, rowNum) -> new ChatLinkFilterEntity(
+                        new ChatLinkFilterId(rs.getLong("chat_id"), rs.getLong("link_id"), rs.getLong("filter_id")),
+                        chatLinkFilterEntity.chatEntity(),
+                        chatLinkFilterEntity.linkEntity(),
+                        chatLinkFilterEntity.filterEntity()))
                 .single();
     }
 
