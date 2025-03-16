@@ -9,7 +9,9 @@ app:
 
   data-base:
     access-type: SQL
-    batch-size: 500
+    batch-size: 1000
+
+  n-threads: 4
 
 spring:
   application:

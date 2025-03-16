@@ -8,6 +8,9 @@ import backend.academy.scrapper.service.LinkCheckerService;
 import backend.academy.scrapper.service.NotificationSendingService;
 import backend.academy.scrapper.service.ScrapperService;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,6 +25,7 @@ public class ScrapperServiceImpl implements ScrapperService {
     private final ChatService chatService;
     private final LinkCheckerService linkCheckerService;
     private final NotificationSendingService notificationSendingService;
+    private final ExecutorService executorService;
 
     @Override
     @Scheduled(fixedRateString = "#{${app.fixed-rate-string}}")
@@ -37,10 +41,31 @@ public class ScrapperServiceImpl implements ScrapperService {
             if (linkSubscriptionsPage == null || linkSubscriptionsPage.isEmpty()) {
                 break;
             }
-
-            processBatch(linkSubscriptionsPage.getContent());
+            processBatchInParallel(linkSubscriptionsPage.getContent());
             page++;
         }
+    }
+
+    private void processBatchInParallel(List<LinkSubscriptions> batch) {
+        int chunkSize = (int) Math.ceil((double) batch.size() / scrapperConfig.nThreads());
+        List<List<LinkSubscriptions>> partitions = partitionList(batch, chunkSize);
+
+        List<Future<?>> futures = partitions.stream()
+                .map(subBatch -> executorService.submit(() -> processBatch(subBatch)))
+                .collect(Collectors.toList());
+
+        futures.forEach(future -> {
+            try {
+                future.get();
+            } catch (Exception e) {
+                log.error("Error processing batch", e);
+            }
+        });
+    }
+
+    private static <T> List<List<T>> partitionList(List<T> list, int chunkSize) {
+        return list.stream().collect(Collectors.groupingBy(i -> list.indexOf(i) / chunkSize)).values().stream()
+                .toList();
     }
 
     private void processBatch(List<LinkSubscriptions> batch) {

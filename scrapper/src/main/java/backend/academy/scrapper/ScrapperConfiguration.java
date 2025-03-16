@@ -21,6 +21,8 @@ import backend.academy.scrapper.repository.impl.SqlChatRepository;
 import backend.academy.scrapper.repository.impl.SqlFilterRepository;
 import backend.academy.scrapper.repository.impl.SqlLinkRepository;
 import backend.academy.scrapper.repository.impl.SqlTagRepository;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,36 +59,41 @@ public class ScrapperConfiguration {
     }
 
     @Bean
-    LinkRepository linkRepository(JdbcClient jdbcClient, OrmLinkRepository ormLinkRepository) {
+    public LinkRepository linkRepository(JdbcClient jdbcClient, OrmLinkRepository ormLinkRepository) {
         return dataBaseRepositoryFactory.getRepository(new SqlLinkRepository(jdbcClient), ormLinkRepository);
     }
 
     @Bean
-    TagRepository tagRepository(JdbcClient jdbcClient, OrmTagRepository ormTagRepository) {
+    public TagRepository tagRepository(JdbcClient jdbcClient, OrmTagRepository ormTagRepository) {
         return dataBaseRepositoryFactory.getRepository(new SqlTagRepository(jdbcClient), ormTagRepository);
     }
 
     @Bean
-    FilterRepository filterRepository(JdbcClient jdbcClient, OrmFilterRepository ormFilterRepository) {
+    public FilterRepository filterRepository(JdbcClient jdbcClient, OrmFilterRepository ormFilterRepository) {
         return dataBaseRepositoryFactory.getRepository(new SqlFilterRepository(jdbcClient), ormFilterRepository);
     }
 
     @Bean
-    ChatLinkRepository chatLinkRepository(JdbcClient jdbcClient, OrmChatLinkRepository ormChatLinkRepository) {
+    public ChatLinkRepository chatLinkRepository(JdbcClient jdbcClient, OrmChatLinkRepository ormChatLinkRepository) {
         return dataBaseRepositoryFactory.getRepository(new SqlChatLinkRepository(jdbcClient), ormChatLinkRepository);
     }
 
     @Bean
-    ChatLinkTagRepository chatLinkTagRepository(
+    public ChatLinkTagRepository chatLinkTagRepository(
             JdbcClient jdbcClient, OrmChatLinkTagRepository ormChatLinkTagRepository) {
         return dataBaseRepositoryFactory.getRepository(
                 new SqlChatLinkTagRepository(jdbcClient), ormChatLinkTagRepository);
     }
 
     @Bean
-    ChatLinkFilterRepository chatLinkFilterRepository(
+    public ChatLinkFilterRepository chatLinkFilterRepository(
             JdbcClient jdbcClient, OrmChatLinkFilterRepository ormChatLinkFilterRepository) {
         return dataBaseRepositoryFactory.getRepository(
                 new SqlChatLinkFilterRepository(jdbcClient), ormChatLinkFilterRepository);
+    }
+
+    @Bean
+    public ExecutorService executorService(ScrapperConfig scrapperConfig) {
+        return Executors.newFixedThreadPool(scrapperConfig.nThreads());
     }
 }
