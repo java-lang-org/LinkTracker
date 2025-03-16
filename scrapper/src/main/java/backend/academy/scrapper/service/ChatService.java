@@ -14,6 +14,8 @@ public interface ChatService {
 
     List<LinkResponse> getLinks(long chatId);
 
+    List<LinkResponse> getLinksByTag(long chatId, String tagName);
+
     LinkResponse addLink(long chatId, Link link, List<String> tags, List<String> filters);
 
     LinkResponse removeLink(long chatId, String url);

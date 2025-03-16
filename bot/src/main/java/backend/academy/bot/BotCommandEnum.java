@@ -8,6 +8,7 @@ public enum BotCommandEnum {
     TRACK("/track", "Track link"),
     UNTRACK("/untrack", "Untrack link"),
     LIST("/list", "Show list of tracked links"),
+    LIST_BY_TAG("/list_by_tag", "Show list of tracked links by tag"),
     HELP("/help", "List of commands");
 
     private final String command;

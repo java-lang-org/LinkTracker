@@ -39,6 +39,11 @@ public class ChatServiceImpl implements backend.academy.scrapper.service.ChatSer
     }
 
     @Override
+    public List<LinkResponse> getLinksByTag(long chatId, String tagName) {
+        return linkService.getLinksByTag(getChatEntityOrThrow(chatId), tagName);
+    }
+
+    @Override
     public LinkResponse addLink(long chatId, Link link, List<String> tags, List<String> filters) {
         linkService.addLink(getChatEntityOrThrow(chatId), link, tags, filters);
         return new LinkResponse(chatId, link.url(), tags, filters);

@@ -50,6 +50,34 @@ public interface OrmChatLinkRepository
     @Transactional
     @Query(
             """
+SELECT new backend.academy.scrapper.LinkWithTagsAndFilters(
+    linkEntity.url,
+    STRING_AGG((DISTINCT(tagEntity.name)), ' '),
+    STRING_AGG((DISTINCT(filterEntity.name || ':' || filterEntity.pattern)), ' ')
+)
+FROM ChatLinkEntity chatLinkEntity
+JOIN LinkEntity linkEntity
+    ON chatLinkEntity.linkEntity.id = linkEntity.id
+LEFT JOIN ChatLinkTagEntity chatLinkTagEntity
+    ON chatLinkEntity.chatEntity.id = chatLinkTagEntity.chatEntity.id
+    AND chatLinkEntity.linkEntity.id = chatLinkTagEntity.linkEntity.id
+LEFT JOIN TagEntity tagEntity
+    ON chatLinkTagEntity.tagEntity.id = tagEntity.id
+LEFT JOIN ChatLinkFilterEntity chatLinkFilterEntity
+    ON chatLinkEntity.chatEntity.id = chatLinkFilterEntity.chatEntity.id
+    AND chatLinkEntity.linkEntity.id = chatLinkFilterEntity.linkEntity.id
+LEFT JOIN FilterEntity filterEntity
+    ON chatLinkFilterEntity.filterEntity.id = filterEntity.id
+WHERE chatLinkEntity.chatEntity.id = :#{#chatEntity.id} AND tagEntity.name = :tagName
+GROUP BY linkEntity.url
+""")
+    List<LinkWithTagsAndFilters> findLinksWithTagsAndFiltersByChatEntityAndTagName(
+            ChatEntity chatEntity, String tagName);
+
+    @Override
+    @Transactional
+    @Query(
+            """
     SELECT new backend.academy.scrapper.LinkWithTagsAndFilters(
         linkEntity.url,
         STRING_AGG((DISTINCT(tagEntity.name)), ' '),

@@ -60,6 +60,22 @@ public class SqlChatLinkRepository implements ChatLinkRepository {
             GROUP BY l.url
         """;
 
+    private static final String FIND_LINKS_WITH_TAGS_AND_FILTERS_BY_CHAT_ENTITY_AND_TAG_NAME_SQL =
+            """
+        SELECT
+            l.url,
+            STRING_AGG(DISTINCT t.name, ' ') AS tags,
+            STRING_AGG(DISTINCT f.name || ':' || f.pattern, ' ') AS filters
+        FROM chat_link cl
+        JOIN link l ON cl.link_id = l.id
+        LEFT JOIN chat_link_tag clt ON cl.chat_id = clt.chat_id AND cl.link_id = clt.link_id
+        LEFT JOIN tag t ON clt.tag_id = t.id
+        LEFT JOIN chat_link_filter clf ON cl.chat_id = clf.chat_id AND cl.link_id = clf.link_id
+        LEFT JOIN filter f ON clf.filter_id = f.id
+        WHERE cl.chat_id = :chatId AND t.name = :tagName
+        GROUP BY l.url
+    """;
+
     private static final String FIND_LINK_WITH_TAGS_AND_FILTERS_BY_CHAT_ENTITY_AND_LINK_ENTITY_SQL =
             """
             SELECT
@@ -137,6 +153,18 @@ public class SqlChatLinkRepository implements ChatLinkRepository {
         return jdbcClient
                 .sql(FIND_LINKS_WITH_TAGS_AND_FILTERS_BY_CHAT_ENTITY_SQL)
                 .param("chatId", chatEntity.id())
+                .query(linkWithTagsAndFiltersRowMapper)
+                .list();
+    }
+
+    @Override
+    @Transactional
+    public List<LinkWithTagsAndFilters> findLinksWithTagsAndFiltersByChatEntityAndTagName(
+            ChatEntity chatEntity, String tagName) {
+        return jdbcClient
+                .sql(FIND_LINKS_WITH_TAGS_AND_FILTERS_BY_CHAT_ENTITY_AND_TAG_NAME_SQL)
+                .param("chatId", chatEntity.id())
+                .param("tagName", tagName)
                 .query(linkWithTagsAndFiltersRowMapper)
                 .list();
     }

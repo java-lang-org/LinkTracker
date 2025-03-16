@@ -76,6 +76,13 @@ public class LinkServiceImpl implements LinkService {
     }
 
     @Override
+    public List<LinkResponse> getLinksByTag(ChatEntity chatEntity, String tagName) {
+        return chatLinkRepository.findLinksWithTagsAndFiltersByChatEntityAndTagName(chatEntity, tagName).stream()
+                .map(link -> new LinkResponse(chatEntity.id(), link.url(), link.tags(), link.filters()))
+                .toList();
+    }
+
+    @Override
     public Optional<LinkResponse> removeLink(ChatEntity chatEntity, String url) {
         Optional<LinkEntity> linkEntity = linkRepository.findByUrl(url);
         if (linkEntity.isEmpty()) {

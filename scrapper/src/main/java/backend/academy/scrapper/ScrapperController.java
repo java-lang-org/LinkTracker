@@ -55,6 +55,13 @@ public class ScrapperController {
         return ResponseEntity.ok().body(new ListLinksResponse(links, links.size()));
     }
 
+    @GetMapping(path = "/links/{tag-name}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ListLinksResponse> getLinksByTag(
+            @RequestHeader("Tg-Chat-Id") long tgChatId, @PathVariable("tag-name") String tagName) {
+        List<LinkResponse> links = chatService.getLinksByTag(tgChatId, tagName);
+        return ResponseEntity.ok().body(new ListLinksResponse(links, links.size()));
+    }
+
     @PostMapping(
             path = "/links",
             consumes = MediaType.APPLICATION_JSON_VALUE,

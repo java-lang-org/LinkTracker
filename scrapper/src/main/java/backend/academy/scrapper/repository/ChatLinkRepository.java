@@ -18,6 +18,9 @@ public interface ChatLinkRepository {
 
     List<LinkWithTagsAndFilters> findLinksWithTagsAndFiltersByChatEntity(ChatEntity chatEntity);
 
+    List<LinkWithTagsAndFilters> findLinksWithTagsAndFiltersByChatEntityAndTagName(
+            ChatEntity chatEntity, String tagName);
+
     Optional<LinkWithTagsAndFilters> findLinkWithTagsAndFiltersByChatEntityAndLinkEntity(
             ChatEntity chatEntity, LinkEntity linkEntity);
 

@@ -17,6 +17,8 @@ public interface LinkService {
 
     List<LinkResponse> getLinks(ChatEntity chatEntity);
 
+    List<LinkResponse> getLinksByTag(ChatEntity chatEntity, String tagName);
+
     Optional<LinkResponse> removeLink(ChatEntity chatEntity, String url);
 
     Page<LinkSubscriptions> findAllLinkSubscriptions(int page, int size);
