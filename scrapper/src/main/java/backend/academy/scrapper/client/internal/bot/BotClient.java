@@ -17,7 +17,7 @@ public class BotClient {
     private final RestClient restClient;
 
     @Value("${bot.url}")
-    private String scrapperUrl;
+    private String botUrl;
 
     public BotClient(@Qualifier("botRestClient") RestClient restClient) {
         this.restClient = restClient;
@@ -27,7 +27,7 @@ public class BotClient {
         try {
             ResponseEntity<ApiErrorResponse> response = restClient
                     .post()
-                    .uri(scrapperUrl + "/updates")
+                    .uri(botUrl + "/updates")
                     .body(new LinkUpdate(link.hashCode(), link.url(), description, chatIds))
                     .retrieve()
                     .toEntity(ApiErrorResponse.class);
