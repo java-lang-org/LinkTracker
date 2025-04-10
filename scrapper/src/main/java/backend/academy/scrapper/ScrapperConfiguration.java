@@ -1,5 +1,7 @@
 package backend.academy.scrapper;
 
+import backend.academy.scrapper.client.internal.bot.BotClient;
+import backend.academy.scrapper.config.properties.NotificationsTopicProperties;
 import backend.academy.scrapper.repository.ChatLinkFilterRepository;
 import backend.academy.scrapper.repository.ChatLinkRepository;
 import backend.academy.scrapper.repository.ChatLinkTagRepository;
@@ -21,12 +23,17 @@ import backend.academy.scrapper.repository.impl.SqlChatRepository;
 import backend.academy.scrapper.repository.impl.SqlFilterRepository;
 import backend.academy.scrapper.repository.impl.SqlLinkRepository;
 import backend.academy.scrapper.repository.impl.SqlTagRepository;
+import backend.academy.scrapper.service.NotificationSendingService;
+import backend.academy.scrapper.service.impl.HttpNotificationSendingService;
+import backend.academy.scrapper.service.impl.KafkaNotificationSendingService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.simple.JdbcClient;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.client.RestClient;
 
 @Configuration
@@ -95,5 +102,19 @@ public class ScrapperConfiguration {
     @Bean
     public ExecutorService executorService(ScrapperConfig scrapperConfig) {
         return Executors.newFixedThreadPool(scrapperConfig.nThreads());
+    }
+
+    @Bean
+    public NotificationSendingService notificationSendingService(
+            ScrapperConfig scrapperConfig,
+            BotClient botClient,
+            ObjectMapper objectMapper,
+            NotificationsTopicProperties notificationsTopicProperties,
+            KafkaTemplate<Long, String> kafkaTemplate) {
+        if (scrapperConfig.messageTransport() == ScrapperConfig.MessageTransport.HTTP) {
+            return new HttpNotificationSendingService(botClient);
+        } else {
+            return new KafkaNotificationSendingService(objectMapper, notificationsTopicProperties, kafkaTemplate);
+        }
     }
 }

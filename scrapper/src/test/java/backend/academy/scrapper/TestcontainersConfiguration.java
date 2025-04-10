@@ -3,6 +3,7 @@ package backend.academy.scrapper;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.List;
 import liquibase.Liquibase;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
@@ -19,18 +20,17 @@ import org.testcontainers.utility.DockerImageName;
 
 @TestConfiguration(proxyBeanMethods = false)
 public class TestcontainersConfiguration {
-
     @Bean
     @RestartScope
     @ServiceConnection(name = "redis")
-    GenericContainer<?> redisContainer() {
+    public GenericContainer<?> redisContainer() {
         return new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(6379);
     }
 
     @Bean
     @RestartScope
     @ServiceConnection
-    PostgreSQLContainer<?> postgresContainer() {
+    public PostgreSQLContainer<?> postgresContainer() {
         PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17-alpine")
                 .withExposedPorts(5432)
                 .withDatabaseName("scrapper")
@@ -46,8 +46,13 @@ public class TestcontainersConfiguration {
     @Bean
     @RestartScope
     @ServiceConnection
-    KafkaContainer kafkaContainer() {
-        return new KafkaContainer("apache/kafka-native:3.8.1").withExposedPorts(9092);
+    public KafkaContainer kafkaContainer() {
+        KafkaContainer kafkaContainer = new KafkaContainer("apache/kafka-native:3.8.1").withExposedPorts(9092);
+
+        kafkaContainer.setPortBindings(List.of("9092:9092"));
+        kafkaContainer.start();
+
+        return kafkaContainer;
     }
 
     private void applyLiquibaseMigrations(PostgreSQLContainer<?> postgres) {
