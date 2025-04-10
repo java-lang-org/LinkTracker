@@ -18,9 +18,6 @@ spring:
       ddl-auto: validate
     open-in-view: false
 
-  kafka:
-    bootstrap-servers: kafka-1:9092, kafka-2:9092
-
 server:
   port: 8080
 

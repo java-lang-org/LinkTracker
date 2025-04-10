@@ -7,22 +7,28 @@ import org.springframework.context.annotation.Bean;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
+import java.util.List;
 
 // isolated from the "scrapper" module's containers!
 @TestConfiguration(proxyBeanMethods = false)
 class TestcontainersConfiguration {
-
     @Bean
     @RestartScope
     @ServiceConnection(name = "redis")
-    GenericContainer<?> redisContainer() {
+    public GenericContainer<?> redisContainer() {
         return new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(6379);
     }
 
     @Bean
     @RestartScope
     @ServiceConnection
-    KafkaContainer kafkaContainer() {
-        return new KafkaContainer("apache/kafka-native:3.8.1").withExposedPorts(9092);
+    public KafkaContainer kafkaContainer() {
+        KafkaContainer kafkaContainer =
+            new KafkaContainer("apache/kafka-native:3.8.1").withExposedPorts(9092);
+
+        kafkaContainer.setPortBindings(List.of("9092:9092"));
+        kafkaContainer.start();
+
+        return kafkaContainer;
     }
 }
