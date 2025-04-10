@@ -83,6 +83,7 @@ class CommandHandlerTest {
             /track - track link
             /untrack - untrack link
             /list - show list of tracked links
+            /list_by_tag - show list of tracked links by tag
             /help - list of commands
             """;
         assertEquals(expectedResponse, response);

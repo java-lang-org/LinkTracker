@@ -1,0 +1,61 @@
+package backend.academy.scrapper.client.external.github;
+
+import backend.academy.scrapper.Link;
+import backend.academy.scrapper.client.external.ExternalClient;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+
+@Service
+public class GitHubClient extends ExternalClient {
+    public GitHubClient(
+            @Value("${github.base-url:https://api.github.com}") String baseUrl,
+            @Qualifier("gitHubRestClient") RestClient restClient) {
+        super(baseUrl, restClient);
+    }
+
+    public List<String> getRecentEvents(Link link) {
+        String[] parts = link.uri().getPath().split("/");
+        GitHubEvent[] events = restClient()
+                .get()
+                .uri(baseUrl() + "/repos/{owner}/{repo}/events", parts[1], parts[2])
+                .retrieve()
+                .body(GitHubEvent[].class);
+
+        return Arrays.stream(events)
+                .filter(event -> link.lastUpdate().isBefore(event.createdAt()))
+                .filter(event -> "PullRequestEvent".equals(event.type()) || "IssuesEvent".equals(event.type()))
+                .peek(event -> {
+                    if (link.lastUpdate().isBefore(event.createdAt())) {
+                        link.lastUpdate(event.createdAt());
+                    }
+                })
+                .map(this::formatEventMessage)
+                .collect(Collectors.toList());
+    }
+
+    private String formatEventMessage(GitHubEvent event) {
+        Optional<String> title = Optional.ofNullable(event.payload())
+                .map(p -> p.pullRequest() != null
+                        ? p.pullRequest().title()
+                        : p.issue() != null ? p.issue().title() : null);
+
+        Optional<String> description = Optional.ofNullable(event.payload())
+                .map(p -> p.pullRequest() != null
+                        ? p.pullRequest().body()
+                        : p.issue() != null ? p.issue().body() : null);
+
+        return title.map(t -> String.format(
+                        "**%s** (by %s)%n%s%n%s",
+                        t,
+                        event.actor().login(),
+                        event.createdAt(),
+                        description.map(this::truncate).orElse("")))
+                .orElse("");
+    }
+}

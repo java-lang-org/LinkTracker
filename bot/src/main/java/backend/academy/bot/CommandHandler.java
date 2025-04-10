@@ -1,5 +1,6 @@
 package backend.academy.bot;
 
+import static backend.academy.bot.BotStateType.WAITING_TAG;
 import static backend.academy.bot.BotStateType.WAITING_TRACKED_URL;
 import static backend.academy.bot.BotStateType.WAITING_UNTRACKED_URL;
 
@@ -28,6 +29,7 @@ public class CommandHandler {
             case WAITING_TAGS -> handleTags(chatId, receivedText);
             case WAITING_FILTER -> handleFilters(chatId, receivedText);
             case WAITING_UNTRACKED_URL -> handleUntrackedUrl(chatId, receivedText);
+            case WAITING_TAG -> handleTag(chatId, receivedText);
             default -> handleCommand(chatId, receivedText);
         };
     }
@@ -81,6 +83,27 @@ public class CommandHandler {
         }
     }
 
+    private String handleTag(long chatId, String tagName) {
+        ResponseEntity<?> response = scrapperClient.getLinksByTag(chatId, tagName);
+        chatRepository.setDefault(chatId);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            ListLinksResponse listLinksResponse = (ListLinksResponse) response.getBody();
+
+            if (listLinksResponse == null || listLinksResponse.links().isEmpty()) {
+                return "No tracked links.";
+            }
+
+            return listLinksResponse.links().stream()
+                    .map(LinkResponse::toString)
+                    .collect(Collectors.joining("\n"));
+        } else if (response.getStatusCode() == HttpStatus.BAD_REQUEST
+                || response.getStatusCode() == HttpStatus.NOT_FOUND) {
+            return handleApiErrorResponseResponse(response);
+        } else {
+            return handleUnexpectedResponse(response);
+        }
+    }
+
     private String handleCommand(long chatId, String command) {
         return switch (command) {
             case "/start" -> handleStartCommand(chatId);
@@ -88,6 +111,7 @@ public class CommandHandler {
             case "/track" -> handleTrackCommand(chatId);
             case "/untrack" -> handleUntrackCommand(chatId);
             case "/list" -> handleListCommand(chatId);
+            case "/list_by_tag" -> handleListByTagCommand(chatId);
             case "/help" -> getHelpMessage();
             default -> """
                 Unknown command.
@@ -124,16 +148,16 @@ public class CommandHandler {
     }
 
     private String handleTrackCommand(long chatId) {
-        return handleStateChangingCommand(chatId, WAITING_TRACKED_URL);
+        return handleStateChangingCommand(chatId, WAITING_TRACKED_URL, "Enter link:");
     }
 
     private String handleUntrackCommand(long chatId) {
-        return handleStateChangingCommand(chatId, WAITING_UNTRACKED_URL);
+        return handleStateChangingCommand(chatId, WAITING_UNTRACKED_URL, "Enter link:");
     }
 
-    private String handleStateChangingCommand(long chatId, BotStateType state) {
+    private String handleStateChangingCommand(long chatId, BotStateType state, String message) {
         chatRepository.setBotStateType(chatId, state);
-        return "Enter link:";
+        return message;
     }
 
     private String handleListCommand(long chatId) {
@@ -155,6 +179,10 @@ public class CommandHandler {
         }
     }
 
+    private String handleListByTagCommand(long chatId) {
+        return handleStateChangingCommand(chatId, WAITING_TAG, "Enter tag:");
+    }
+
     private String getHelpMessage() {
         return """
             /start - register chat
@@ -162,6 +190,7 @@ public class CommandHandler {
             /track - track link
             /untrack - untrack link
             /list - show list of tracked links
+            /list_by_tag - show list of tracked links by tag
             /help - list of commands
             """;
     }

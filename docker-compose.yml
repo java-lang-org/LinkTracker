@@ -5,6 +5,9 @@ services:
       - "8080:8080"
     environment:
       TELEGRAM_TOKEN: $TELEGRAM_TOKEN
+    depends_on:
+      - postgresql
+      - liquibase-migrations
 
   scrapper:
     build: ./scrapper
@@ -12,3 +15,38 @@ services:
       - "8081:8081"
     environment:
       GITHUB_TOKEN: $GITHUB_TOKEN
+    depends_on:
+      - postgresql
+      - liquibase-migrations
+
+  liquibase-migrations:
+    image: liquibase/liquibase:4.29
+    container_name: migrations
+    depends_on:
+      - postgresql
+    command:
+      - --searchPath=/changesets
+      - --changelog-file=master.xml
+      - --driver=org.postgresql.Driver
+      - --url=jdbc:postgresql://postgresql:5432/scrapper
+      - --username=postgres
+      - --password=postgres
+      - update
+    volumes:
+      - ./migrations:/changesets
+
+  postgresql:
+    image: postgres:17-alpine
+    container_name: postgresql
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: scrapper
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

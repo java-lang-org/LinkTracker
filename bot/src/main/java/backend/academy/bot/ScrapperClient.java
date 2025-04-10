@@ -66,6 +66,19 @@ public class ScrapperClient {
         }
     }
 
+    public ResponseEntity<?> getLinksByTag(long chatId, String tagName) {
+        try {
+            return restClient
+                    .get()
+                    .uri(scrapperUrl + "/links/{tagName}", tagName)
+                    .headers(headers -> headers.addAll(headersWithChatId(chatId)))
+                    .retrieve()
+                    .toEntity(ListLinksResponse.class);
+        } catch (Exception e) {
+            return handleException(e, "get links by tag", chatId);
+        }
+    }
+
     public ResponseEntity<?> addLinkTracking(long chatId, BotState botState) {
         try {
             return restClient

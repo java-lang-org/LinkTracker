@@ -5,10 +5,12 @@ import backend.academy.dto.ApiErrorResponse;
 import backend.academy.dto.LinkResponse;
 import backend.academy.dto.ListLinksResponse;
 import backend.academy.dto.RemoveLinkRequest;
+import backend.academy.scrapper.service.ChatService;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import java.util.Arrays;
 import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,15 +30,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/")
+@AllArgsConstructor
 @Slf4j
 public class ScrapperController {
     private static final int STACK_TRACE_MAX_SIZE = 10;
 
     private final ChatService chatService;
-
-    public ScrapperController(ChatService chatService) {
-        this.chatService = chatService;
-    }
 
     @PostMapping(path = "/tg-chat/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> registerChat(@PathVariable long id) {
@@ -56,14 +55,22 @@ public class ScrapperController {
         return ResponseEntity.ok().body(new ListLinksResponse(links, links.size()));
     }
 
+    @GetMapping(path = "/links/{tag-name}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ListLinksResponse> getLinksByTag(
+            @RequestHeader("Tg-Chat-Id") long tgChatId, @PathVariable("tag-name") String tagName) {
+        List<LinkResponse> links = chatService.getLinksByTag(tgChatId, tagName);
+        return ResponseEntity.ok().body(new ListLinksResponse(links, links.size()));
+    }
+
     @PostMapping(
             path = "/links",
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<LinkResponse> addLinkTracking(
             @RequestHeader("Tg-Chat-Id") long tgChatId, @Valid @RequestBody AddLinkRequest addLinkRequest) {
-        Link link = Link.parse(addLinkRequest);
-        LinkResponse linkResponse = chatService.addLink(tgChatId, link);
+        Link link = Link.getInstance(addLinkRequest.url());
+        LinkResponse linkResponse =
+                chatService.addLink(tgChatId, link, addLinkRequest.tags(), addLinkRequest.filters());
         return ResponseEntity.ok().body(linkResponse);
     }
 
