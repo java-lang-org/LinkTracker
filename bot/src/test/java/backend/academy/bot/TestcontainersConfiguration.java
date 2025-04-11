@@ -1,5 +1,6 @@
 package backend.academy.bot;
 
+import java.util.List;
 import org.springframework.boot.devtools.restart.RestartScope;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -7,7 +8,6 @@ import org.springframework.context.annotation.Bean;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
-import java.util.List;
 
 // isolated from the "scrapper" module's containers!
 @TestConfiguration(proxyBeanMethods = false)
@@ -23,8 +23,7 @@ class TestcontainersConfiguration {
     @RestartScope
     @ServiceConnection
     public KafkaContainer kafkaContainer() {
-        KafkaContainer kafkaContainer =
-            new KafkaContainer("apache/kafka-native:3.8.1").withExposedPorts(9092);
+        KafkaContainer kafkaContainer = new KafkaContainer("apache/kafka-native:3.8.1").withExposedPorts(9092);
 
         kafkaContainer.setPortBindings(List.of("9092:9092"));
         kafkaContainer.start();

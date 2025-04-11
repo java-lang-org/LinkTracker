@@ -32,9 +32,7 @@ public class KafkaConsumerConfig {
         props.put(JsonDeserializer.TRUSTED_PACKAGES, "backend.academy.dto");
 
         return new DefaultKafkaConsumerFactory<>(
-            props,
-            new LongDeserializer(),
-            new JsonDeserializer<>(LinkUpdate.class));
+                props, new LongDeserializer(), new JsonDeserializer<>(LinkUpdate.class));
     }
 
     @Bean
@@ -50,20 +48,20 @@ public class KafkaConsumerConfig {
 
     @Bean
     public DefaultErrorHandler errorHandler(
-        KafkaTemplate<Long, LinkUpdate> kafkaTemplate,
-        DlqTopicProperties dlqTopicProperties) {
-        return new DefaultErrorHandler(new DeadLetterPublishingRecoverer(
-            kafkaTemplate,
-            (consumerRecord, e) -> new TopicPartition(dlqTopicProperties.topic(), dlqTopicProperties.partition())),
-            new FixedBackOff(500L, 1));
+            KafkaTemplate<Long, LinkUpdate> kafkaTemplate, DlqTopicProperties dlqTopicProperties) {
+        return new DefaultErrorHandler(
+                new DeadLetterPublishingRecoverer(
+                        kafkaTemplate,
+                        (consumerRecord, e) ->
+                                new TopicPartition(dlqTopicProperties.topic(), dlqTopicProperties.partition())),
+                new FixedBackOff(500L, 1));
     }
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<Long, LinkUpdate> kafkaListenerContainerFactory(
-        ConsumerFactory<Long, LinkUpdate> consumerFactory,
-        DefaultErrorHandler errorHandler) {
+            ConsumerFactory<Long, LinkUpdate> consumerFactory, DefaultErrorHandler errorHandler) {
         ConcurrentKafkaListenerContainerFactory<Long, LinkUpdate> factory =
-            new ConcurrentKafkaListenerContainerFactory<>();
+                new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
         factory.setCommonErrorHandler(errorHandler);
         return factory;

@@ -1,11 +1,12 @@
-package backend.academy.scrapper.config;
+package backend.academy.bot.config;
 
-import backend.academy.scrapper.config.properties.NotificationsTopicProperties;
+import backend.academy.bot.config.properties.DlqTopicProperties;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +16,7 @@ import org.springframework.kafka.core.KafkaAdmin;
 @RequiredArgsConstructor
 public class CommonKafkaConfig {
     private final KafkaProperties kafkaProperties;
-    private final NotificationsTopicProperties notificationsTopicProperties;
+    private final DlqTopicProperties dlqTopicProperties;
 
     @Bean
     public Admin localKafkaClusterAdminClient() {
@@ -30,7 +31,7 @@ public class CommonKafkaConfig {
     }
 
     @Bean
-    public KafkaAdmin.NewTopics topics() {
-        return new KafkaAdmin.NewTopics(notificationsTopicProperties.toNewTopic());
+    public NewTopic dlqTopic() {
+        return dlqTopicProperties.toNewTopic();
     }
 }
