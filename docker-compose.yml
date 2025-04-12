@@ -73,6 +73,8 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
       KAFKA_MIN_IN_SYNC_REPLICAS: 2
+    volumes:
+      - kafka_1_data:/var/lib/kafka-1/data
     depends_on:
       - zookeeper
 
@@ -90,6 +92,8 @@ services:
       KAFKA_BROKER_ID: 2
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
       KAFKA_MIN_IN_SYNC_REPLICAS: 2
+    volumes:
+      - kafka_2_data:/var/lib/kafka-2/data
     depends_on:
       - zookeeper
 
@@ -106,3 +110,5 @@ services:
 
 volumes:
   postgres_data:
+  kafka_1_data:
+  kafka_2_data:
