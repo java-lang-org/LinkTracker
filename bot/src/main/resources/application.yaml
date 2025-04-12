@@ -4,6 +4,7 @@ app:
 
   notifications:
     topic: notifications
+    dlq: dlq
     group-id: consumer-group
 
 spring:
