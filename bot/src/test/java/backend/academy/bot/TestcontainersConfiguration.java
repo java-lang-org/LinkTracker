@@ -9,14 +9,13 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
-// isolated from the "scrapper" module's containers!
 @TestConfiguration(proxyBeanMethods = false)
 class TestcontainersConfiguration {
     @Bean
     @RestartScope
-    @ServiceConnection(name = "redis")
+    @ServiceConnection
     public GenericContainer<?> redisContainer() {
-        return new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(6379);
+        return new GenericContainer<>(DockerImageName.parse("redis:7.4.2")).withExposedPorts(6379);
     }
 
     @Bean
