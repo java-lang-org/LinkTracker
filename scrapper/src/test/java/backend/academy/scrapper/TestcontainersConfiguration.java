@@ -22,13 +22,6 @@ import org.testcontainers.utility.DockerImageName;
 public class TestcontainersConfiguration {
     @Bean
     @RestartScope
-    @ServiceConnection(name = "redis")
-    public GenericContainer<?> redisContainer() {
-        return new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(6379);
-    }
-
-    @Bean
-    @RestartScope
     @ServiceConnection
     public PostgreSQLContainer<?> postgresContainer() {
         PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:17-alpine")
