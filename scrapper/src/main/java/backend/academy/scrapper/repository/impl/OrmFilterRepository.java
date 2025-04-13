@@ -2,6 +2,7 @@ package backend.academy.scrapper.repository.impl;
 
 import backend.academy.scrapper.entity.FilterEntity;
 import backend.academy.scrapper.repository.FilterRepository;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -23,4 +24,15 @@ public interface OrmFilterRepository extends FilterRepository, JpaRepository<Fil
         )
     """)
     void deleteUnusedFilters();
+
+    @Override
+    @Transactional
+    @Query(
+            """
+        SELECT
+            chatLinkFilterEntity.filterEntity
+        FROM ChatLinkFilterEntity chatLinkFilterEntity
+        WHERE chatLinkFilterEntity.chatEntity.id = :chatId AND chatLinkFilterEntity.linkEntity.url = :url
+    """)
+    List<FilterEntity> findByChatIdAndLinkUrl(Long chatId, String url);
 }
