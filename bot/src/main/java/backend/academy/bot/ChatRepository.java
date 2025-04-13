@@ -14,4 +14,10 @@ public interface ChatRepository {
     void setFilters(long id, List<String> filters);
 
     BotState getState(long id);
+
+    default BotState getStateAndSetDefault(long id) {
+        BotState botState = getState(id);
+        setDefault(id);
+        return botState;
+    }
 }

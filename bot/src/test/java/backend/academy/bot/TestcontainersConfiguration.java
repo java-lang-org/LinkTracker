@@ -13,7 +13,7 @@ import org.testcontainers.utility.DockerImageName;
 class TestcontainersConfiguration {
     @Bean
     @RestartScope
-    @ServiceConnection
+    @ServiceConnection("redis")
     public GenericContainer<?> redisContainer() {
         return new GenericContainer<>(DockerImageName.parse("redis:7.4.2")).withExposedPorts(6379);
     }
