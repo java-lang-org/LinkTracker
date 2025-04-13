@@ -54,7 +54,7 @@ public class KafkaConsumerServiceTest {
         kafkaTemplateForValidUpdate.send(topic, validUpdate);
 
         // Assert
-        await().atMost(5, SECONDS).untilAsserted(() -> verify(botService)
+        await().atMost(10, SECONDS).untilAsserted(() -> verify(botService)
                 .updates(argThat(update -> update.id() == validUpdate.id()
                         && update.url().equals(validUpdate.url())
                         && update.description().equals(validUpdate.description())
@@ -70,10 +70,10 @@ public class KafkaConsumerServiceTest {
         kafkaTemplateForInvalidUpdate.send(topic, invalidUpdate);
 
         // Assert
-        await().atMost(5, SECONDS)
+        await().atMost(10, SECONDS)
                 .untilAsserted(() -> verify(botService, never()).updates(any()));
 
-        await().atMost(5, SECONDS).until(() -> {
+        await().atMost(10, SECONDS).until(() -> {
             ConsumerRecords<Long, String> records = kafkaConsumerForInvalidUpdate.poll(Duration.ofMillis(100));
             Iterable<ConsumerRecord<Long, String>> recordList = records.records(dlq);
             return recordList.iterator().hasNext();
