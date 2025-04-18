@@ -20,6 +20,15 @@ app:
 
   message-transport: Kafka
 
+  digest:
+    prefix-key: digest
+    cron: 0 0 10 * * *
+
+  data:
+    redis:
+      host: redis-digest
+      port: 6379
+
 spring:
   application:
     name: Scrapper

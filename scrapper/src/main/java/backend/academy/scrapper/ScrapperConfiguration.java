@@ -2,6 +2,7 @@ package backend.academy.scrapper;
 
 import backend.academy.scrapper.client.internal.bot.BotClient;
 import backend.academy.scrapper.config.properties.NotificationsTopicProperties;
+import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.repository.ChatLinkFilterRepository;
 import backend.academy.scrapper.repository.ChatLinkRepository;
 import backend.academy.scrapper.repository.ChatLinkTagRepository;
@@ -27,6 +28,7 @@ import backend.academy.scrapper.service.NotificationSendingService;
 import backend.academy.scrapper.service.impl.HttpNotificationSendingService;
 import backend.academy.scrapper.service.impl.KafkaNotificationSendingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import lombok.AllArgsConstructor;
@@ -81,8 +83,10 @@ public class ScrapperConfiguration {
     }
 
     @Bean
-    public ChatLinkRepository chatLinkRepository(JdbcClient jdbcClient, OrmChatLinkRepository ormChatLinkRepository) {
-        return dataBaseRepositoryFactory.getRepository(new SqlChatLinkRepository(jdbcClient), ormChatLinkRepository);
+    public ChatLinkRepository chatLinkRepository(
+            JdbcClient jdbcClient, ObjectMapper objectMapper, OrmChatLinkRepository ormChatLinkRepository) {
+        return dataBaseRepositoryFactory.getRepository(
+                new SqlChatLinkRepository(jdbcClient, objectMapper), ormChatLinkRepository);
     }
 
     @Bean
@@ -116,5 +120,17 @@ public class ScrapperConfiguration {
         } else {
             return new KafkaNotificationSendingService(objectMapper, notificationsTopicProperties, kafkaTemplate);
         }
+    }
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(ChatEntity.class, new ChatEntityDeserializer());
+
+        mapper.registerModule(module);
+
+        return mapper;
     }
 }

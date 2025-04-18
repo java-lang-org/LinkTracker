@@ -1,6 +1,7 @@
 package backend.academy.scrapper.service;
 
 import backend.academy.scrapper.Link;
+import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.entity.FilterEntity;
 import java.util.List;
 
@@ -9,5 +10,5 @@ public interface FilterService {
 
     void deleteUnusedFilters();
 
-    List<Long> filter(List<Long> chatIds, Link link, String description);
+    List<ChatEntity> filter(List<ChatEntity> chatEntities, Link link, String description);
 }

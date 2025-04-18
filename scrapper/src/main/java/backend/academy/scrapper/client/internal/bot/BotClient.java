@@ -2,8 +2,6 @@ package backend.academy.scrapper.client.internal.bot;
 
 import backend.academy.dto.ApiErrorResponse;
 import backend.academy.dto.LinkUpdate;
-import backend.academy.scrapper.Link;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,12 +21,12 @@ public class BotClient {
         this.restClient = restClient;
     }
 
-    public void updates(Link link, String description, List<Long> chatIds) {
+    public void updates(LinkUpdate linkUpdate) {
         try {
             ResponseEntity<ApiErrorResponse> response = restClient
                     .post()
                     .uri(botUrl + "/updates")
-                    .body(new LinkUpdate(link.hashCode(), link.url(), description, chatIds))
+                    .body(linkUpdate)
                     .retrieve()
                     .toEntity(ApiErrorResponse.class);
             if (!response.getStatusCode().is2xxSuccessful()) {

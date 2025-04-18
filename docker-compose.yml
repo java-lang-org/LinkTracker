@@ -21,6 +21,7 @@ services:
       - liquibase-migrations
       - kafka-1
       - kafka-2
+      - redis-digest
 
   liquibase-migrations:
     image: liquibase/liquibase:4.29
@@ -117,8 +118,17 @@ services:
     volumes:
       - redis_data:/var/lib/redis/data
 
+  redis-digest:
+    image: redis:7.4.2
+    container_name: redis-digest
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_digest_data:/var/lib/redis_digest/data
+
 volumes:
   postgres_data:
   kafka_1_data:
   kafka_2_data:
   redis_data:
+  redis_digest_data:

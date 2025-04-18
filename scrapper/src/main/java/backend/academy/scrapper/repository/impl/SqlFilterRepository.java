@@ -38,7 +38,7 @@ public class SqlFilterRepository implements FilterRepository {
         JOIN link l ON cl.link_id = l.id
         LEFT JOIN chat_link_filter clf ON cl.chat_id = clf.chat_id AND cl.link_id = clf.link_id
         LEFT JOIN filter f ON clf.filter_id = f.id
-        WHERE c.id = :chatId AND l.url = :url
+        WHERE c.id = :chatId AND l.url = :url AND f.id IS NOT NULL AND f.name IS NOT NULL AND f.pattern IS NOT NULL
     """;
 
     private final JdbcClient jdbcClient;

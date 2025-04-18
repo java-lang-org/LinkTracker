@@ -1,6 +1,7 @@
 package backend.academy.scrapper.service.impl;
 
 import backend.academy.scrapper.Link;
+import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.entity.FilterEntity;
 import backend.academy.scrapper.repository.FilterRepository;
 import backend.academy.scrapper.service.FilterService;
@@ -25,9 +26,9 @@ public class FilterServiceImpl implements FilterService {
     }
 
     @Override
-    public List<Long> filter(List<Long> chatIds, Link link, String description) {
-        return chatIds.stream()
-                .filter(chatId -> shouldNotify(chatId, link.url(), description))
+    public List<ChatEntity> filter(List<ChatEntity> chatEntities, Link link, String description) {
+        return chatEntities.stream()
+                .filter(chatEntity -> shouldNotify(chatEntity.id(), link.url(), description))
                 .toList();
     }
 

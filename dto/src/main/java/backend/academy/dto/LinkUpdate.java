@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -29,4 +30,22 @@ public class LinkUpdate implements Serializable {
     @Size(min = 1, message = "At least one thChatId is required")
     @JsonProperty("tgChatIds")
     private List<Long> tgChatIds;
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+
+        if (!(object instanceof LinkUpdate that)) {
+            return false;
+        }
+
+        return Objects.equals(url, that.url);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(url);
+    }
 }

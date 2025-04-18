@@ -13,9 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class SqlChatRepository implements ChatRepository {
     private static final String EXISTS_BY_ID_SQL = "SELECT EXISTS(SELECT 1 FROM chat WHERE id = :id)";
 
-    private static final String FIND_BY_ID_SQL = "SELECT id FROM chat WHERE id = :id";
+    private static final String FIND_BY_ID_SQL = "SELECT id, notification_mode FROM chat WHERE id = :id";
 
-    private static final String INSERT_SQL = "INSERT INTO chat (id) VALUES (:id) RETURNING id";
+    private static final String INSERT_SQL =
+            "INSERT INTO chat (id, notification_mode) VALUES (:id, :notification_mode) RETURNING id, notification_mode";
 
     private static final String DELETE_SQL = "DELETE FROM chat WHERE id = :id";
 
@@ -47,6 +48,7 @@ public class SqlChatRepository implements ChatRepository {
         return jdbcClient
                 .sql(INSERT_SQL)
                 .param("id", chatEntity.id())
+                .param("notification_mode", chatEntity.notificationMode().name())
                 .query(ChatEntity.class)
                 .single();
     }
