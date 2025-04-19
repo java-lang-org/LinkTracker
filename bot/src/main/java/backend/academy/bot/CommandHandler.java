@@ -71,6 +71,8 @@ public class CommandHandler {
         return switch (command) {
             case "/start" -> handleStartCommand(chatId);
             case "/end" -> handleEndCommand(chatId);
+            case "/set_immediate" -> handleSetImmediate(chatId);
+            case "/set_digest" -> handleSetDigest(chatId);
             case "/track" -> handleTrackCommand(chatId);
             case "/untrack" -> handleUntrackCommand(chatId);
             case "/list" -> handleListCommand(chatId);
@@ -100,6 +102,24 @@ public class CommandHandler {
         return cachedCommandService.handleEndCommand(chatId);
     }
 
+    private String handleSetImmediate(long chatId) {
+        ResponseEntity<?> response = scrapperClient.setImmediate(chatId);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return "Immediate notification mode is set";
+        } else {
+            return ResponseEntityUtils.handleNotOkResponseEntity(response);
+        }
+    }
+
+    private String handleSetDigest(long chatId) {
+        ResponseEntity<?> response = scrapperClient.setDigest(chatId);
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return "Digest notification mode is set";
+        } else {
+            return ResponseEntityUtils.handleNotOkResponseEntity(response);
+        }
+    }
+
     private String handleTrackCommand(long chatId) {
         return handleStateChangingCommand(chatId, WAITING_TRACKED_URL, "Enter link:");
     }
@@ -125,6 +145,8 @@ public class CommandHandler {
         return """
             /start - register chat
             /end - delete chat
+            /set_immediate - set immediate
+            /set_digest - set digest
             /track - track link
             /untrack - untrack link
             /list - show list of tracked links

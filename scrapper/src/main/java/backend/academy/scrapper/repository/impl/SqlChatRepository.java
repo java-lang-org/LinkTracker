@@ -1,5 +1,6 @@
 package backend.academy.scrapper.repository.impl;
 
+import backend.academy.scrapper.NotificationMode;
 import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.repository.ChatRepository;
 import java.util.Optional;
@@ -19,6 +20,8 @@ public class SqlChatRepository implements ChatRepository {
             "INSERT INTO chat (id, notification_mode) VALUES (:id, :notification_mode) RETURNING id, notification_mode";
 
     private static final String DELETE_SQL = "DELETE FROM chat WHERE id = :id";
+
+    private static final String UPDATE_SQL = "UPDATE chat SET notification_mode = :notification_mode WHERE id = :id";
 
     private final JdbcClient jdbcClient;
 
@@ -57,5 +60,15 @@ public class SqlChatRepository implements ChatRepository {
     @Transactional
     public void delete(ChatEntity chatEntity) {
         jdbcClient.sql(DELETE_SQL).param("id", chatEntity.id()).update();
+    }
+
+    @Override
+    @Transactional
+    public void setNotificationMode(Long id, NotificationMode notificationMode) {
+        jdbcClient
+                .sql(UPDATE_SQL)
+                .param("notification_mode", notificationMode.name())
+                .param("id", id)
+                .update();
     }
 }

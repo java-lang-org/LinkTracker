@@ -93,6 +93,8 @@ class CommandHandlerTest {
                 """
             /start - register chat
             /end - delete chat
+            /set_immediate - set immediate
+            /set_digest - set digest
             /track - track link
             /untrack - untrack link
             /list - show list of tracked links
