@@ -1,10 +1,4 @@
 app:
-  github-token: ${GITHUB_TOKEN}
-
-  stackoverflow:
-    key: ${SO_TOKEN_KEY}
-    access-token: ${SO_ACCESS_TOKEN}
-
   fixed-rate-string: 60_000 # in milliseconds
 
   data-base:
@@ -63,10 +57,30 @@ springdoc:
     path: /swagger-ui
 
 github:
+  token: ${GITHUB_TOKEN}
+
   base-url: https://api.github.com
 
+  timeouts-in-sec:
+    connect: 3
+    connection-request: 5
+    read: 5
+
 stackoverflow:
+  key: ${SO_TOKEN_KEY}
+  access-token: ${SO_ACCESS_TOKEN}
+
   base-url: https://api.stackexchange.com/2.3
+
+  timeouts-in-sec:
+    connect: 3
+    connection-request: 5
+    read: 5
 
 bot:
   url: http://bot:8080
+
+  timeouts-in-sec:
+    connect: 1
+    connection-request: 2
+    read: 2

@@ -2,21 +2,19 @@ package backend.academy.scrapper.client.external.github;
 
 import backend.academy.scrapper.Link;
 import backend.academy.scrapper.client.external.ExternalClient;
+import backend.academy.scrapper.config.GitHubConfig;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 @Service
 public class GitHubClient extends ExternalClient {
-    public GitHubClient(
-            @Value("${github.base-url:https://api.github.com}") String baseUrl,
-            @Qualifier("gitHubRestClient") RestClient restClient) {
-        super(baseUrl, restClient);
+    public GitHubClient(GitHubConfig gitHubConfig, @Qualifier("gitHubRestClient") RestClient restClient) {
+        super(gitHubConfig.url(), restClient);
     }
 
     public List<String> getRecentEvents(Link link) {

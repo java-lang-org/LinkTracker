@@ -12,6 +12,7 @@ import backend.academy.scrapper.Link;
 import backend.academy.scrapper.LinkType;
 import backend.academy.scrapper.client.external.github.GitHubClient;
 import backend.academy.scrapper.client.external.github.GitHubEvent;
+import backend.academy.scrapper.config.GitHubConfig;
 import java.time.ZonedDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +23,9 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.web.client.RestClient;
 
 class GitHubClientTest {
+    @Mock
+    private GitHubConfig gitHubConfig;
+
     @Mock
     private RestClient restClient;
 

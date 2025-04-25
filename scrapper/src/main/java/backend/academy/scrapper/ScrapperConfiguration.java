@@ -1,6 +1,9 @@
 package backend.academy.scrapper;
 
 import backend.academy.scrapper.client.internal.bot.BotClient;
+import backend.academy.scrapper.config.BotConfig;
+import backend.academy.scrapper.config.GitHubConfig;
+import backend.academy.scrapper.config.StackOverflowConfig;
 import backend.academy.scrapper.config.properties.NotificationsTopicProperties;
 import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.repository.ChatLinkFilterRepository;
@@ -29,11 +32,14 @@ import backend.academy.scrapper.service.impl.HttpNotificationSendingService;
 import backend.academy.scrapper.service.impl.KafkaNotificationSendingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.client.RestClient;
@@ -41,25 +47,29 @@ import org.springframework.web.client.RestClient;
 @Configuration
 @AllArgsConstructor
 public class ScrapperConfiguration {
-    ScrapperConfig scrapperConfig;
     DataBaseRepositoryFactory dataBaseRepositoryFactory;
 
     @Bean(name = "gitHubRestClient")
-    public RestClient gitHubRestClient() {
+    public RestClient gitHubRestClient(GitHubConfig gitHubConfig) {
         return RestClient.builder()
                 .defaultHeader("X-GitHub-Api-Version", "2022-11-28")
-                .defaultHeader("Authorization", "Bearer " + scrapperConfig.githubToken())
+                .defaultHeader("Authorization", "Bearer " + gitHubConfig.token())
+                .requestFactory(gitHubClientHttpRequestFactory(gitHubConfig))
                 .build();
     }
 
     @Bean(name = "stackOverflowRestClient")
-    public RestClient stackOverflowClient() {
-        return RestClient.builder().build();
+    public RestClient stackOverflowClient(StackOverflowConfig stackOverflowConfig) {
+        return RestClient.builder()
+                .requestFactory(stackOverflowClientHttpRequestFactory(stackOverflowConfig))
+                .build();
     }
 
     @Bean(name = "botRestClient")
-    public RestClient botRestClient() {
-        return RestClient.builder().build();
+    public RestClient botRestClient(BotConfig botConfig) {
+        return RestClient.builder()
+                .requestFactory(botClientHttpRequestFactory(botConfig))
+                .build();
     }
 
     @Bean
@@ -132,5 +142,35 @@ public class ScrapperConfiguration {
         mapper.registerModule(module);
 
         return mapper;
+    }
+
+    private ClientHttpRequestFactory gitHubClientHttpRequestFactory(GitHubConfig gitHubConfig) {
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
+        factory.setConnectTimeout(
+                Duration.ofSeconds(gitHubConfig.timeoutsInSec().connect()));
+        factory.setConnectionRequestTimeout(
+                Duration.ofSeconds(gitHubConfig.timeoutsInSec().connectionRequest()));
+        factory.setReadTimeout(Duration.ofSeconds(gitHubConfig.timeoutsInSec().read()));
+        return factory;
+    }
+
+    private ClientHttpRequestFactory stackOverflowClientHttpRequestFactory(StackOverflowConfig stackOverflowConfig) {
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
+        factory.setConnectTimeout(
+                Duration.ofSeconds(stackOverflowConfig.timeoutsInSec().connect()));
+        factory.setConnectionRequestTimeout(
+                Duration.ofSeconds(stackOverflowConfig.timeoutsInSec().connectionRequest()));
+        factory.setReadTimeout(
+                Duration.ofSeconds(stackOverflowConfig.timeoutsInSec().read()));
+        return factory;
+    }
+
+    private ClientHttpRequestFactory botClientHttpRequestFactory(BotConfig botConfig) {
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(botConfig.timeoutsInSec().connect()));
+        factory.setConnectionRequestTimeout(
+                Duration.ofSeconds(botConfig.timeoutsInSec().connectionRequest()));
+        factory.setReadTimeout(Duration.ofSeconds(botConfig.timeoutsInSec().read()));
+        return factory;
     }
 }

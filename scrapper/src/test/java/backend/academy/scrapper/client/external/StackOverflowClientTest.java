@@ -10,13 +10,13 @@ import static org.mockito.Mockito.when;
 import backend.academy.scrapper.DateTimeUtils;
 import backend.academy.scrapper.Link;
 import backend.academy.scrapper.LinkType;
-import backend.academy.scrapper.ScrapperConfig;
 import backend.academy.scrapper.client.external.stackoverflow.StackOverflowClient;
 import backend.academy.scrapper.client.external.stackoverflow.StackOverflowEvent;
 import backend.academy.scrapper.client.external.stackoverflow.StackOverflowEventResponse;
 import backend.academy.scrapper.client.external.stackoverflow.StackOverflowQuestion;
 import backend.academy.scrapper.client.external.stackoverflow.StackOverflowResponse;
 import backend.academy.scrapper.client.external.stackoverflow.StackOverflowUser;
+import backend.academy.scrapper.config.StackOverflowConfig;
 import java.time.ZonedDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,14 +35,11 @@ class StackOverflowClientTest {
     @Mock
     private RestClient.ResponseSpec responseSpec;
 
-    private final String baseUrl = "https://api.stackexchange.com/2.3";
+    private final StackOverflowConfig stackOverflowConfig = mock(StackOverflowConfig.class);
 
     private final RestClient restClient = mock(RestClient.class);
 
-    private final ScrapperConfig scrapperConfig = mock(ScrapperConfig.class);
-
-    private final StackOverflowClient stackOverflowClient =
-            new StackOverflowClient(baseUrl, restClient, scrapperConfig);
+    private StackOverflowClient stackOverflowClient;
 
     private Link link;
     private final ZonedDateTime pastDate = DateTimeUtils.now().minusDays(1);
@@ -51,6 +48,9 @@ class StackOverflowClientTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        when(stackOverflowConfig.url()).thenReturn("https://api.stackexchange.com/2.3");
+        stackOverflowClient = new StackOverflowClient(stackOverflowConfig, restClient);
 
         link = Link.getInstance("https://stackoverflow.com/questions/12345", LinkType.STACK_OVERFLOW, pastDate);
     }
