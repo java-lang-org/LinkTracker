@@ -34,3 +34,8 @@ springdoc:
 
 scrapper:
   url: http://scrapper:8081
+
+  timeouts-in-sec:
+    connect: 1
+    connection-request: 2
+    read: 2

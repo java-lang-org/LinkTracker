@@ -1,12 +1,13 @@
 package backend.academy.bot;
 
+import backend.academy.bot.config.ScrapperConfig;
 import backend.academy.dto.AddLinkRequest;
 import backend.academy.dto.ApiErrorResponse;
 import backend.academy.dto.LinkResponse;
 import backend.academy.dto.ListLinksResponse;
 import backend.academy.dto.RemoveLinkRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -18,22 +19,17 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class ScrapperClient {
     private final RestClient restClient;
-
-    @Value("${scrapper.url}")
-    private String scrapperUrl;
-
-    public ScrapperClient(RestClient restClient) {
-        this.restClient = restClient;
-    }
+    private final ScrapperConfig scrapperConfig;
 
     public ResponseEntity<?> registerChat(long chatId) {
         try {
             return restClient
                     .post()
-                    .uri(scrapperUrl + "/tg-chat/{id}", chatId)
+                    .uri(scrapperConfig.url() + "/tg-chat/{id}", chatId)
                     .retrieve()
                     .toBodilessEntity();
         } catch (Exception e) {
@@ -45,7 +41,7 @@ public class ScrapperClient {
         try {
             return restClient
                     .delete()
-                    .uri(scrapperUrl + "/tg-chat/{id}", chatId)
+                    .uri(scrapperConfig.url() + "/tg-chat/{id}", chatId)
                     .retrieve()
                     .toBodilessEntity();
         } catch (Exception e) {
@@ -57,7 +53,7 @@ public class ScrapperClient {
         try {
             return restClient
                     .put()
-                    .uri(scrapperUrl + "/set-immediate/{id}", chatId)
+                    .uri(scrapperConfig.url() + "/set-immediate/{id}", chatId)
                     .retrieve()
                     .toBodilessEntity();
         } catch (Exception e) {
@@ -69,7 +65,7 @@ public class ScrapperClient {
         try {
             return restClient
                     .put()
-                    .uri(scrapperUrl + "/set-digest/{id}", chatId)
+                    .uri(scrapperConfig.url() + "/set-digest/{id}", chatId)
                     .retrieve()
                     .toBodilessEntity();
         } catch (Exception e) {
@@ -81,7 +77,7 @@ public class ScrapperClient {
         try {
             return restClient
                     .get()
-                    .uri(scrapperUrl + "/links")
+                    .uri(scrapperConfig.url() + "/links")
                     .headers(headers -> headers.addAll(headersWithChatId(chatId)))
                     .retrieve()
                     .toEntity(ListLinksResponse.class);
@@ -94,7 +90,7 @@ public class ScrapperClient {
         try {
             return restClient
                     .get()
-                    .uri(scrapperUrl + "/links/{tagName}", tagName)
+                    .uri(scrapperConfig.url() + "/links/{tagName}", tagName)
                     .headers(headers -> headers.addAll(headersWithChatId(chatId)))
                     .retrieve()
                     .toEntity(ListLinksResponse.class);
@@ -107,7 +103,7 @@ public class ScrapperClient {
         try {
             return restClient
                     .post()
-                    .uri(scrapperUrl + "/links")
+                    .uri(scrapperConfig.url() + "/links")
                     .contentType(MediaType.APPLICATION_JSON)
                     .headers(headers -> headers.addAll(headersWithChatId(chatId)))
                     .body(new AddLinkRequest(botState.url(), botState.tags(), botState.filters()))
@@ -122,7 +118,7 @@ public class ScrapperClient {
         try {
             return restClient
                     .method(HttpMethod.DELETE)
-                    .uri(scrapperUrl + "/links")
+                    .uri(scrapperConfig.url() + "/links")
                     .contentType(MediaType.APPLICATION_JSON)
                     .headers(headers -> headers.addAll(headersWithChatId(chatId)))
                     .body(new RemoveLinkRequest(uri))
