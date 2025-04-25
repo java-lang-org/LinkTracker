@@ -64,7 +64,7 @@ public class KafkaConsumerServiceTest {
     @Test
     void invalidMessageGoesToDLQ() {
         // Arrange
-        String invalidUpdate = "{}";
+        String invalidUpdate = "invalid";
 
         // Act
         kafkaTemplateForInvalidUpdate.send(topic, invalidUpdate);
