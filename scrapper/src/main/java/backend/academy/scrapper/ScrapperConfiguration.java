@@ -3,6 +3,9 @@ package backend.academy.scrapper;
 import backend.academy.scrapper.client.internal.bot.BotClient;
 import backend.academy.scrapper.config.BotConfig;
 import backend.academy.scrapper.config.GitHubConfig;
+import backend.academy.scrapper.config.HttpStatusRetryPolicy;
+import backend.academy.scrapper.config.RetryConfig;
+import backend.academy.scrapper.config.ScrapperConfig;
 import backend.academy.scrapper.config.StackOverflowConfig;
 import backend.academy.scrapper.config.properties.NotificationsTopicProperties;
 import backend.academy.scrapper.entity.ChatEntity;
@@ -42,6 +45,8 @@ import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.retry.backoff.FixedBackOffPolicy;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.web.client.RestClient;
 
 @Configuration
@@ -142,6 +147,20 @@ public class ScrapperConfiguration {
         mapper.registerModule(module);
 
         return mapper;
+    }
+
+    @Bean
+    public RetryTemplate retryTemplate(RetryConfig retryConfig) {
+        RetryTemplate retryTemplate = new RetryTemplate();
+
+        FixedBackOffPolicy fixedBackOffPolicy = new FixedBackOffPolicy();
+        fixedBackOffPolicy.setBackOffPeriod(retryConfig.backOffPeriod());
+        retryTemplate.setBackOffPolicy(fixedBackOffPolicy);
+
+        retryTemplate.setRetryPolicy(
+                new HttpStatusRetryPolicy(retryConfig.maxAttempts(), retryConfig.retryableStatuses()));
+
+        return retryTemplate;
     }
 
     private ClientHttpRequestFactory gitHubClientHttpRequestFactory(GitHubConfig gitHubConfig) {

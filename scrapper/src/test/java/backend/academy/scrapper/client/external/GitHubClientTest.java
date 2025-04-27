@@ -3,8 +3,6 @@ package backend.academy.scrapper.client.external;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.contains;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import backend.academy.scrapper.DateTimeUtils;
@@ -20,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.web.client.RestClient;
 
 class GitHubClientTest {
@@ -28,6 +27,9 @@ class GitHubClientTest {
 
     @Mock
     private RestClient restClient;
+
+    @Mock
+    private RetryTemplate retryTemplate;
 
     @InjectMocks
     private GitHubClient gitHubClient;
@@ -99,14 +101,6 @@ class GitHubClientTest {
     }
 
     private void mockGitHubApiResponse(GitHubEvent... events) {
-        RestClient.RequestHeadersUriSpec requestHeadersUriSpec = mock(RestClient.RequestHeadersUriSpec.class);
-        RestClient.RequestHeadersSpec requestHeadersSpec = mock(RestClient.RequestHeadersSpec.class);
-        RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
-
-        when(restClient.get()).thenReturn(requestHeadersUriSpec);
-        when(requestHeadersUriSpec.uri(contains("/repos/{owner}/{repo}/events"), any(String.class), any(String.class)))
-                .thenReturn(requestHeadersSpec);
-        when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
-        when(responseSpec.body(GitHubEvent[].class)).thenReturn(events);
+        when(retryTemplate.execute(any())).thenReturn(events);
     }
 }

@@ -4,7 +4,7 @@ import backend.academy.dto.LinkUpdate;
 import backend.academy.scrapper.Link;
 import backend.academy.scrapper.LinkSubscriptions;
 import backend.academy.scrapper.NotificationMode;
-import backend.academy.scrapper.ScrapperConfig;
+import backend.academy.scrapper.config.ScrapperConfig;
 import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.service.ChatService;
 import backend.academy.scrapper.service.FilterService;

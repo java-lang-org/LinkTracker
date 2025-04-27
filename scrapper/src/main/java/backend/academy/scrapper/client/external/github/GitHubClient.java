@@ -8,22 +8,30 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 @Service
 public class GitHubClient extends ExternalClient {
-    public GitHubClient(GitHubConfig gitHubConfig, @Qualifier("gitHubRestClient") RestClient restClient) {
+    private final RetryTemplate retryTemplate;
+
+    public GitHubClient(
+            GitHubConfig gitHubConfig,
+            @Qualifier("gitHubRestClient") RestClient restClient,
+            RetryTemplate retryTemplate) {
         super(gitHubConfig.url(), restClient);
+
+        this.retryTemplate = retryTemplate;
     }
 
     public List<String> getRecentEvents(Link link) {
         String[] parts = link.uri().getPath().split("/");
-        GitHubEvent[] events = restClient()
+        GitHubEvent[] events = retryTemplate.execute(context -> restClient()
                 .get()
                 .uri(baseUrl() + "/repos/{owner}/{repo}/events", parts[1], parts[2])
                 .retrieve()
-                .body(GitHubEvent[].class);
+                .body(GitHubEvent[].class));
 
         return Arrays.stream(events)
                 .filter(event -> link.lastUpdate().isBefore(event.createdAt()))

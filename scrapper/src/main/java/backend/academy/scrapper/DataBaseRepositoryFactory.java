@@ -1,5 +1,6 @@
 package backend.academy.scrapper;
 
+import backend.academy.scrapper.config.ScrapperConfig;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 

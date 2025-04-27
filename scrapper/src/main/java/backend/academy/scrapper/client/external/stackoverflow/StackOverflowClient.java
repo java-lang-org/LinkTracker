@@ -6,15 +6,22 @@ import backend.academy.scrapper.config.StackOverflowConfig;
 import java.util.List;
 import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 public class StackOverflowClient extends ExternalClient {
+    private final RetryTemplate retryTemplate;
+
     public StackOverflowClient(
-            StackOverflowConfig stackOverflowConfig, @Qualifier("stackOverflowRestClient") RestClient restClient) {
+            StackOverflowConfig stackOverflowConfig,
+            @Qualifier("stackOverflowRestClient") RestClient restClient,
+            RetryTemplate retryTemplate) {
         super(stackOverflowConfig.url(), restClient);
+
+        this.retryTemplate = retryTemplate;
     }
 
     @Override
@@ -55,7 +62,8 @@ public class StackOverflowClient extends ExternalClient {
                 .buildAndExpand(questionId)
                 .toUriString();
 
-        return restClient().get().uri(uri).retrieve().body(StackOverflowResponse.class);
+        return retryTemplate.execute(
+                context -> restClient().get().uri(uri).retrieve().body(StackOverflowResponse.class));
     }
 
     private List<StackOverflowEvent> fetchAnswers(String questionId) {
@@ -68,8 +76,8 @@ public class StackOverflowClient extends ExternalClient {
                 .buildAndExpand(questionId)
                 .toUriString();
 
-        StackOverflowEventResponse response =
-                restClient().get().uri(url).retrieve().body(StackOverflowEventResponse.class);
+        StackOverflowEventResponse response = retryTemplate.execute(
+                context -> restClient().get().uri(url).retrieve().body(StackOverflowEventResponse.class));
         return response == null ? List.of() : response.items();
     }
 
@@ -83,8 +91,8 @@ public class StackOverflowClient extends ExternalClient {
                 .buildAndExpand(questionId)
                 .toUriString();
 
-        StackOverflowEventResponse response =
-                restClient().get().uri(url).retrieve().body(StackOverflowEventResponse.class);
+        StackOverflowEventResponse response = retryTemplate.execute(
+                context -> restClient().get().uri(url).retrieve().body(StackOverflowEventResponse.class));
         return response == null ? List.of() : response.items();
     }
 
