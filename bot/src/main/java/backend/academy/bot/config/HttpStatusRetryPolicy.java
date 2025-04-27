@@ -22,10 +22,9 @@ public class HttpStatusRetryPolicy implements RetryPolicy {
         }
         Throwable t = context.getLastThrowable();
         while (t != null) {
-            if (t instanceof HttpStatusCodeException ex) {
-                if (retryableStatuses.contains(ex.getStatusCode().value())) {
-                    return true;
-                }
+            if (t instanceof HttpStatusCodeException ex
+                    && retryableStatuses.contains(ex.getStatusCode().value())) {
+                return true;
             }
             t = t.getCause();
         }
@@ -34,7 +33,7 @@ public class HttpStatusRetryPolicy implements RetryPolicy {
 
     @Override
     public RetryContext open(RetryContext parent) {
-        return new org.springframework.retry.context.RetryContextSupport(parent);
+        return new RetryContextSupport(parent);
     }
 
     @Override
