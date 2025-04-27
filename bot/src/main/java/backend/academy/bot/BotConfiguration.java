@@ -1,6 +1,8 @@
 package backend.academy.bot;
 
 import backend.academy.bot.config.BotConfig;
+import backend.academy.bot.config.HttpStatusRetryPolicy;
+import backend.academy.bot.config.RetryConfig;
 import backend.academy.bot.config.ScrapperConfig;
 import com.pengrad.telegrambot.TelegramBot;
 import java.time.Duration;
@@ -10,6 +12,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.retry.backoff.FixedBackOffPolicy;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.web.client.RestClient;
 
 @Configuration
@@ -29,6 +33,20 @@ public class BotConfiguration {
         return RestClient.builder()
                 .requestFactory(clientHttpRequestFactory(scrapperConfig))
                 .build();
+    }
+
+    @Bean
+    public RetryTemplate retryTemplate(RetryConfig retryConfig) {
+        RetryTemplate retryTemplate = new RetryTemplate();
+
+        FixedBackOffPolicy fixedBackOffPolicy = new FixedBackOffPolicy();
+        fixedBackOffPolicy.setBackOffPeriod(retryConfig.backOffPeriod());
+        retryTemplate.setBackOffPolicy(fixedBackOffPolicy);
+
+        retryTemplate.setRetryPolicy(
+                new HttpStatusRetryPolicy(retryConfig.maxAttempts(), retryConfig.retryableStatuses()));
+
+        return retryTemplate;
     }
 
     private ClientHttpRequestFactory clientHttpRequestFactory(ScrapperConfig scrapperConfig) {

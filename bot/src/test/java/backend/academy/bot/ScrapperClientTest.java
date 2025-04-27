@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
@@ -19,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
@@ -29,6 +31,9 @@ import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 class ScrapperClientTest {
+    @Mock
+    private RetryTemplate retryTemplate;
+
     @Mock
     private RestClient restClient;
 
@@ -55,7 +60,7 @@ class ScrapperClientTest {
                 "Bad Request",
                 apiErrorResponse);
 
-        when(restClient.get()).thenThrow(exception);
+        when(retryTemplate.execute(any())).thenThrow(exception);
 
         // Act
         ResponseEntity<?> response = scrapperClient.getLinks(chatId);
@@ -82,7 +87,7 @@ class ScrapperClientTest {
                 "Not Found",
                 apiErrorResponse);
 
-        when(restClient.get()).thenThrow(exception);
+        when(retryTemplate.execute(any())).thenThrow(exception);
 
         // Act
         ResponseEntity<?> response = scrapperClient.getLinks(chatId);
@@ -111,7 +116,7 @@ class ScrapperClientTest {
                 "Internal Server Error",
                 apiErrorResponse);
 
-        when(restClient.get()).thenThrow(exception);
+        when(retryTemplate.execute(any())).thenThrow(exception);
 
         // Act
         ResponseEntity<?> response = scrapperClient.getLinks(chatId);
@@ -133,7 +138,7 @@ class ScrapperClientTest {
         // Arrange
         RestClientException exception = new RestClientException("Network Error");
 
-        when(restClient.get()).thenThrow(exception);
+        when(retryTemplate.execute(any())).thenThrow(exception);
 
         // Act
         ResponseEntity<?> response = scrapperClient.getLinks(chatId);

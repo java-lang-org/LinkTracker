@@ -39,3 +39,11 @@ scrapper:
     connect: 1
     connection-request: 2
     read: 2
+
+retry:
+  back-off-period: 2000 # in ms
+  max-attempts: 2
+  retryable-statuses:
+    - 500
+    - 502
+    - 503
