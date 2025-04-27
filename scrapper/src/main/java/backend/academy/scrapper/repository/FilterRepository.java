@@ -1,6 +1,7 @@
 package backend.academy.scrapper.repository;
 
 import backend.academy.scrapper.entity.FilterEntity;
+import java.util.List;
 import java.util.Optional;
 
 public interface FilterRepository {
@@ -9,4 +10,6 @@ public interface FilterRepository {
     FilterEntity save(FilterEntity filterEntity);
 
     void deleteUnusedFilters();
+
+    List<FilterEntity> findByChatIdAndLinkUrl(Long chatId, String url);
 }

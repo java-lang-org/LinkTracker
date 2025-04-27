@@ -1,9 +1,13 @@
 package backend.academy.scrapper.service.impl;
 
+import backend.academy.dto.LinkUpdate;
 import backend.academy.scrapper.Link;
 import backend.academy.scrapper.LinkSubscriptions;
+import backend.academy.scrapper.NotificationMode;
 import backend.academy.scrapper.ScrapperConfig;
+import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.service.ChatService;
+import backend.academy.scrapper.service.FilterService;
 import backend.academy.scrapper.service.LinkCheckerService;
 import backend.academy.scrapper.service.NotificationSendingService;
 import backend.academy.scrapper.service.ScrapperService;
@@ -26,6 +30,8 @@ public class ScrapperServiceImpl implements ScrapperService {
     private final LinkCheckerService linkCheckerService;
     private final NotificationSendingService notificationSendingService;
     private final ExecutorService executorService;
+    private final FilterService filterService;
+    private final DigestService digestService;
 
     @Override
     @Scheduled(fixedRateString = "#{${app.fixed-rate-string}}")
@@ -74,19 +80,34 @@ public class ScrapperServiceImpl implements ScrapperService {
 
     private void processLinkSubscription(LinkSubscriptions linkSubscription) {
         Link link = linkSubscription.link();
-        List<Long> chatIds = linkSubscription.chatIds();
+        List<ChatEntity> chatEntities = linkSubscription.chatIds();
 
         log.info(
                 "Processing link: url={}, type={}, lastUpdate={}, chatIds={}",
                 link.url(),
                 link.linkType(),
                 link.lastUpdate(),
-                chatIds);
+                chatEntities);
 
         List<String> descriptions = linkCheckerService.checkLink(link);
         if (!descriptions.isEmpty()) {
             chatService.updateLastUpdateByUrl(link.url(), link.lastUpdate());
         }
-        descriptions.forEach(description -> notificationSendingService.sendNotification(link, description, chatIds));
+        descriptions.forEach(description -> {
+            List<ChatEntity> filteredChatEntities = filterService.filter(chatEntities, link, description);
+            handleImmediateNotification(link, description, filteredChatEntities);
+            digestService.handleDigestNotification(link, description, filteredChatEntities);
+        });
+    }
+
+    private void handleImmediateNotification(Link link, String description, List<ChatEntity> chatEntities) {
+        List<Long> immediateChatIds = chatEntities.stream()
+                .filter(chatEntity -> chatEntity.notificationMode() == NotificationMode.IMMEDIATE)
+                .map(ChatEntity::id)
+                .toList();
+        if (!immediateChatIds.isEmpty()) {
+            notificationSendingService.sendNotification(
+                    new LinkUpdate(link.hashCode(), link.url(), description, immediateChatIds));
+        }
     }
 }

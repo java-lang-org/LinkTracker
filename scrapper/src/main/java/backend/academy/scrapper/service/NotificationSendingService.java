@@ -1,8 +1,7 @@
 package backend.academy.scrapper.service;
 
-import backend.academy.scrapper.Link;
-import java.util.List;
+import backend.academy.dto.LinkUpdate;
 
 public interface NotificationSendingService {
-    void sendNotification(Link link, String description, List<Long> chatIds);
+    void sendNotification(LinkUpdate linkUpdate);
 }

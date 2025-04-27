@@ -1,28 +1,40 @@
 package backend.academy.bot;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
 import backend.academy.dto.ApiErrorResponse;
 import backend.academy.dto.LinkResponse;
 import backend.academy.dto.ListLinksResponse;
 import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
+@Import({TestcontainersConfiguration.class, NoCacheTestConfig.class})
+@SpringBootTest(properties = "spring.config.name=application-test")
 class CommandHandlerTest {
+    @MockitoSpyBean
     private ChatRepository chatRepository;
+
+    @MockitoSpyBean
     private ScrapperClient scrapperClient;
+
+    @Autowired
     private CommandHandler commandHandler;
 
-    @BeforeEach
-    void setUp() {
-        chatRepository = mock(ChatRepository.class);
-        scrapperClient = mock(ScrapperClient.class);
-        commandHandler = new CommandHandler(chatRepository, scrapperClient);
+    @AfterEach
+    void tearDown() {
+        clearInvocations(chatRepository, scrapperClient);
+        reset(chatRepository, scrapperClient);
     }
 
     @Test
@@ -31,7 +43,7 @@ class CommandHandlerTest {
         long chatId = 1L;
         String unknownCommand = "/unknownCommand";
 
-        when(chatRepository.getState(chatId)).thenReturn(BotState.getInstance());
+        doReturn(BotState.getInstance()).when(chatRepository).getState(chatId);
 
         // Act
         String response = commandHandler.handle(chatId, unknownCommand);
@@ -51,7 +63,7 @@ class CommandHandlerTest {
         long chatId = 1L;
         String randomText = "Hello, bot!";
 
-        when(chatRepository.getState(chatId)).thenReturn(BotState.getInstance());
+        doReturn(BotState.getInstance()).when(chatRepository).getState(chatId);
 
         // Act
         String response = commandHandler.handle(chatId, randomText);
@@ -70,7 +82,8 @@ class CommandHandlerTest {
         // Arrange
         long chatId = 1L;
         String receivedText = "/help";
-        when(chatRepository.getState(chatId)).thenReturn(BotState.getInstance());
+
+        doReturn(BotState.getInstance()).when(chatRepository).getState(chatId);
 
         // Act
         String response = commandHandler.handle(chatId, receivedText);
@@ -80,6 +93,8 @@ class CommandHandlerTest {
                 """
             /start - register chat
             /end - delete chat
+            /set_immediate - set immediate
+            /set_digest - set digest
             /track - track link
             /untrack - untrack link
             /list - show list of tracked links
@@ -94,9 +109,10 @@ class CommandHandlerTest {
         // Arrange
         long chatId = 1L;
 
-        when(chatRepository.getState(chatId)).thenReturn(BotState.getInstance());
-        when(scrapperClient.getLinks(chatId)).thenReturn((ResponseEntity)
-                ResponseEntity.status(HttpStatus.OK).body(new ListLinksResponse(List.of(), 0)));
+        doReturn(BotState.getInstance()).when(chatRepository).getState(chatId);
+        doReturn(ResponseEntity.status(HttpStatus.OK).body(new ListLinksResponse(List.of(), 0)))
+                .when(scrapperClient)
+                .getLinks(chatId);
 
         // Act
         String response = commandHandler.handle(chatId, "/list");
@@ -112,9 +128,10 @@ class CommandHandlerTest {
         LinkResponse link =
                 new LinkResponse(1L, "https://github.com/owner/repo", List.of("tag1", "tag2"), List.of("filter:value"));
 
-        when(chatRepository.getState(chatId)).thenReturn(BotState.getInstance());
-        when(scrapperClient.getLinks(chatId)).thenReturn((ResponseEntity)
-                ResponseEntity.status(HttpStatus.OK).body(new ListLinksResponse(List.of(link), 1)));
+        doReturn(BotState.getInstance()).when(chatRepository).getState(chatId);
+        doReturn(ResponseEntity.status(HttpStatus.OK).body(new ListLinksResponse(List.of(link), 1)))
+                .when(scrapperClient)
+                .getLinks(chatId);
 
         // Act
         String response = commandHandler.handle(chatId, "/list");
@@ -137,9 +154,10 @@ class CommandHandlerTest {
         LinkResponse link1 = new LinkResponse(1L, "https://github.com/owner1/repo1", List.of(), List.of());
         LinkResponse link2 = new LinkResponse(1L, "https://github.com/owner2/repo2", List.of(), List.of());
 
-        when(chatRepository.getState(chatId)).thenReturn(BotState.getInstance());
-        when(scrapperClient.getLinks(chatId)).thenReturn((ResponseEntity)
-                ResponseEntity.status(HttpStatus.OK).body(new ListLinksResponse(List.of(link1, link2), 1)));
+        doReturn(BotState.getInstance()).when(chatRepository).getState(chatId);
+        doReturn(ResponseEntity.status(HttpStatus.OK).body(new ListLinksResponse(List.of(link1, link2), 1)))
+                .when(scrapperClient)
+                .getLinks(chatId);
 
         // Act
         String response = commandHandler.handle(chatId, "/list");
@@ -163,9 +181,10 @@ class CommandHandlerTest {
         ApiErrorResponse apiErrorResponse =
                 new ApiErrorResponse("description", "400", "exception-name", "exception-message", List.of());
 
-        when(chatRepository.getState(chatId)).thenReturn(BotState.getInstance());
-        when(scrapperClient.getLinks(chatId)).thenReturn((ResponseEntity)
-                ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiErrorResponse));
+        doReturn(BotState.getInstance()).when(chatRepository).getState(chatId);
+        doReturn(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiErrorResponse))
+                .when(scrapperClient)
+                .getLinks(chatId);
 
         // Act
         String response = commandHandler.handle(chatId, "/list");
@@ -180,7 +199,7 @@ class CommandHandlerTest {
         // Arrange
         long chatId = 1L;
 
-        when(chatRepository.getState(chatId)).thenReturn(BotState.getInstance());
+        doReturn(BotState.getInstance()).when(chatRepository).getState(chatId);
         when(scrapperClient.getLinks(chatId))
                 .thenReturn(
                         ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());

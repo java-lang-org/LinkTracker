@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Transactional;
 
 @Import(TestcontainersConfiguration.class)
-@SpringBootTest
+@SpringBootTest(properties = "spring.config.name=application-test")
 @Transactional
 class ChatRepositoryTest {
     @Autowired

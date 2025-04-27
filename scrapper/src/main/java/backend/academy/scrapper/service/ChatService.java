@@ -12,6 +12,10 @@ public interface ChatService {
 
     void deleteChat(long chatId);
 
+    void setImmediate(long chatId);
+
+    void setDigest(long chatId);
+
     List<LinkResponse> getLinks(long chatId);
 
     List<LinkResponse> getLinksByTag(long chatId, String tagName);

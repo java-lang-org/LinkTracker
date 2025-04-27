@@ -4,6 +4,7 @@ import backend.academy.dto.LinkResponse;
 import backend.academy.scrapper.ChatException;
 import backend.academy.scrapper.Link;
 import backend.academy.scrapper.LinkSubscriptions;
+import backend.academy.scrapper.NotificationMode;
 import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.repository.ChatRepository;
 import backend.academy.scrapper.service.LinkService;
@@ -31,6 +32,18 @@ public class ChatServiceImpl implements backend.academy.scrapper.service.ChatSer
         ChatEntity chatEntity = getChatEntityOrThrow(chatId);
         linkService.deleteChat(chatEntity);
         chatRepository.delete(chatEntity);
+    }
+
+    @Override
+    public void setImmediate(long chatId) {
+        ChatEntity chatEntity = getChatEntityOrThrow(chatId);
+        chatRepository.setNotificationMode(chatEntity.id(), NotificationMode.IMMEDIATE);
+    }
+
+    @Override
+    public void setDigest(long chatId) {
+        ChatEntity chatEntity = getChatEntityOrThrow(chatId);
+        chatRepository.setNotificationMode(chatEntity.id(), NotificationMode.DIGEST);
     }
 
     @Override

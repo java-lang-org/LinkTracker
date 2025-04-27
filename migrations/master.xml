@@ -9,5 +9,6 @@
 
     <include relativeToChangelogFile="true" file="00-initial-schema.sql"/>
     <include relativeToChangelogFile="true" file="01-indexed-schema.sql"/>
+    <include relativeToChangelogFile="true" file="02-notification-mode-schema.sql"/>
 
 </databaseChangeLog>

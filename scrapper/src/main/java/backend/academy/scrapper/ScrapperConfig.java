@@ -7,7 +7,11 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "app")
 public record ScrapperConfig(
-        @NotEmpty String githubToken, StackOverflowCredentials stackOverflow, DataBase dataBase, int nThreads) {
+        @NotEmpty String githubToken,
+        StackOverflowCredentials stackOverflow,
+        DataBase dataBase,
+        int nThreads,
+        MessageTransport messageTransport) {
     public record StackOverflowCredentials(@NotEmpty String key, @NotEmpty String accessToken) {}
 
     public record DataBase(AccessType accessType, int batchSize) {
@@ -15,5 +19,10 @@ public record ScrapperConfig(
             SQL,
             ORM
         }
+    }
+
+    public enum MessageTransport {
+        HTTP,
+        Kafka
     }
 }

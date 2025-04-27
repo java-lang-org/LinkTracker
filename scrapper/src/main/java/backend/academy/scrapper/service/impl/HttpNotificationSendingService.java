@@ -1,9 +1,8 @@
 package backend.academy.scrapper.service.impl;
 
-import backend.academy.scrapper.Link;
+import backend.academy.dto.LinkUpdate;
 import backend.academy.scrapper.client.internal.bot.BotClient;
 import backend.academy.scrapper.service.NotificationSendingService;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +12,7 @@ public class HttpNotificationSendingService implements NotificationSendingServic
     private final BotClient botClient;
 
     @Override
-    public void sendNotification(Link link, String description, List<Long> chatIds) {
-        botClient.updates(link, description, chatIds);
+    public void sendNotification(LinkUpdate linkUpdate) {
+        botClient.updates(linkUpdate);
     }
 }

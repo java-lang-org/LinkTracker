@@ -8,10 +8,12 @@ import backend.academy.scrapper.entity.ChatLinkEntity;
 import backend.academy.scrapper.entity.ChatLinkId;
 import backend.academy.scrapper.entity.LinkEntity;
 import backend.academy.scrapper.repository.ChatLinkRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +23,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-@RequiredArgsConstructor
 public class SqlChatLinkRepository implements ChatLinkRepository {
     private static final String EXIST_BY_ID_SQL =
             """
@@ -36,9 +37,10 @@ public class SqlChatLinkRepository implements ChatLinkRepository {
                 l.url,
                 l.type,
                 l.last_update,
-                ARRAY_AGG(cl.chat_id ORDER BY cl.chat_id) AS chat_ids
+                jsonb_agg(jsonb_build_object('id', c.id, 'notification_mode', c.notification_mode) ORDER BY c.id) AS chat_ids
             FROM link l
             JOIN chat_link cl ON cl.link_id = l.id
+            JOIN chat c ON c.id = cl.chat_id
             GROUP BY l.url, l.type, l.last_update
             ORDER BY l.url
             LIMIT :limit OFFSET :offset
@@ -112,15 +114,25 @@ public class SqlChatLinkRepository implements ChatLinkRepository {
     """;
 
     private final JdbcClient jdbcClient;
+    private final RowMapper<LinkWithTagsAndFilters> linkWithTagsAndFiltersRowMapper;
+    private final RowMapper<LinkSubscriptions> linkSubscriptionsRowMapper;
 
-    private final RowMapper<LinkWithTagsAndFilters> linkWithTagsAndFiltersRowMapper = (rs, rowNum) ->
-            new LinkWithTagsAndFilters(rs.getString("url"), rs.getString("tags"), rs.getString("filters"));
-
-    private final RowMapper<LinkSubscriptions> linkSubscriptionsRowMapper = (rs, rowNum) -> new LinkSubscriptions(
-            rs.getString("url"),
-            LinkType.valueOf(rs.getString("type")),
-            rs.getTimestamp("last_update").toInstant().atZone(ZoneId.of("UTC")),
-            List.of((Long[]) rs.getArray("chat_ids").getArray()));
+    public SqlChatLinkRepository(JdbcClient jdbcClient, ObjectMapper objectMapper) {
+        this.jdbcClient = jdbcClient;
+        this.linkWithTagsAndFiltersRowMapper = (rs, rowNum) ->
+                new LinkWithTagsAndFilters(rs.getString("url"), rs.getString("tags"), rs.getString("filters"));
+        this.linkSubscriptionsRowMapper = (rs, rowNum) -> {
+            try {
+                return new LinkSubscriptions(
+                        rs.getString("url"),
+                        LinkType.valueOf(rs.getString("type")),
+                        rs.getTimestamp("last_update").toInstant().atZone(ZoneId.of("UTC")),
+                        objectMapper.readValue(rs.getString("chat_ids"), new TypeReference<>() {}));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Error during deserialization chat_ids", e);
+            }
+        };
+    }
 
     @Override
     @Transactional

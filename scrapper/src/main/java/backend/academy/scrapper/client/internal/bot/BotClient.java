@@ -2,8 +2,6 @@ package backend.academy.scrapper.client.internal.bot;
 
 import backend.academy.dto.ApiErrorResponse;
 import backend.academy.dto.LinkUpdate;
-import backend.academy.scrapper.Link;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,18 +15,18 @@ public class BotClient {
     private final RestClient restClient;
 
     @Value("${bot.url}")
-    private String scrapperUrl;
+    private String botUrl;
 
     public BotClient(@Qualifier("botRestClient") RestClient restClient) {
         this.restClient = restClient;
     }
 
-    public void updates(Link link, String description, List<Long> chatIds) {
+    public void updates(LinkUpdate linkUpdate) {
         try {
             ResponseEntity<ApiErrorResponse> response = restClient
                     .post()
-                    .uri(scrapperUrl + "/updates")
-                    .body(new LinkUpdate(link.hashCode(), link.url(), description, chatIds))
+                    .uri(botUrl + "/updates")
+                    .body(linkUpdate)
                     .retrieve()
                     .toEntity(ApiErrorResponse.class);
             if (!response.getStatusCode().is2xxSuccessful()) {

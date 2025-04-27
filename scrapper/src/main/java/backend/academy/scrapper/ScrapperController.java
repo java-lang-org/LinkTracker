@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -46,6 +47,18 @@ public class ScrapperController {
     @DeleteMapping(path = "/tg-chat/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> deleteChat(@PathVariable long id) {
         chatService.deleteChat(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(path = "/set-immediate/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> setImmediate(@PathVariable long id) {
+        chatService.setImmediate(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping(path = "/set-digest/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> setDigest(@PathVariable long id) {
+        chatService.setDigest(id);
         return ResponseEntity.ok().build();
     }
 

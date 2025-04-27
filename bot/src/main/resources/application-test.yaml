@@ -1,0 +1,36 @@
+app:
+  telegram-token: ${TELEGRAM_TOKEN}
+  n-threads: 2
+
+  notifications:
+    topic: notifications
+    dlq: dlq
+    group-id: consumer-group
+
+spring:
+  application:
+    name: Bot
+
+  liquibase:
+    enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+server:
+  port: 8080
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui
+
+scrapper:
+  url: http://scrapper:8081

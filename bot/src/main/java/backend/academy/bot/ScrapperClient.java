@@ -53,6 +53,30 @@ public class ScrapperClient {
         }
     }
 
+    public ResponseEntity<?> setImmediate(long chatId) {
+        try {
+            return restClient
+                    .put()
+                    .uri(scrapperUrl + "/set-immediate/{id}", chatId)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception e) {
+            return handleException(e, "set immediate", chatId);
+        }
+    }
+
+    public ResponseEntity<?> setDigest(long chatId) {
+        try {
+            return restClient
+                    .put()
+                    .uri(scrapperUrl + "/set-digest/{id}", chatId)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (Exception e) {
+            return handleException(e, "set digest", chatId);
+        }
+    }
+
     public ResponseEntity<?> getLinks(long chatId) {
         try {
             return restClient

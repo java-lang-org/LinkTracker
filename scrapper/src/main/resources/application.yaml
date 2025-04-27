@@ -13,6 +13,22 @@ app:
 
   n-threads: 4
 
+  notifications:
+    topic: notifications
+    partitions: 1
+    replicas: 2
+
+  message-transport: Kafka
+
+  digest:
+    prefix-key: digest
+    cron: 0 0 10 * * *
+
+  data:
+    redis:
+      host: redis-digest
+      port: 6379
+
 spring:
   application:
     name: Scrapper
@@ -34,6 +50,9 @@ spring:
       hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
       hibernate.format_sql: true
     open-in-view: false
+
+  kafka:
+    bootstrap-servers: kafka-1:9092, kafka-2:9092
 
 server:
   port: 8081

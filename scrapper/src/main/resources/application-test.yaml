@@ -1,0 +1,69 @@
+app:
+  github-token: ${GITHUB_TOKEN}
+
+  stackoverflow:
+    key: ${SO_TOKEN_KEY}
+    access-token: ${SO_ACCESS_TOKEN}
+
+  fixed-rate-string: 60_000 # in milliseconds
+
+  data-base:
+    access-type: SQL
+    batch-size: 1000
+
+  n-threads: 4
+
+  notifications:
+    topic: notifications
+    partitions: 1
+    replicas: 1
+
+  message-transport: Kafka
+
+  digest:
+    prefix-key: digest
+    cron: 0 0 10 * * *
+
+  data:
+    redis:
+      host: redis-digest
+      port: 6379
+
+spring:
+  application:
+    name: Scrapper
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://postgresql:5432/scrapper
+    username: postgres
+    password: postgres
+
+  liquibase:
+    enabled: false
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+      hibernate.format_sql: true
+    open-in-view: false
+
+server:
+  port: 8081
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui
+
+github:
+  base-url: https://api.github.com
+
+stackoverflow:
+  base-url: https://api.stackexchange.com/2.3
+
+bot:
+  url: http://bot:8080

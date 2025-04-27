@@ -6,8 +6,9 @@ services:
     environment:
       TELEGRAM_TOKEN: $TELEGRAM_TOKEN
     depends_on:
-      - postgresql
-      - liquibase-migrations
+      - kafka-1
+      - kafka-2
+      - redis
 
   scrapper:
     build: ./scrapper
@@ -18,6 +19,9 @@ services:
     depends_on:
       - postgresql
       - liquibase-migrations
+      - kafka-1
+      - kafka-2
+      - redis-digest
 
   liquibase-migrations:
     image: liquibase/liquibase:4.29
@@ -48,5 +52,83 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka-1:
+    image: confluentinc/cp-kafka:latest
+    hostname: kafka
+    container_name: kafka-1
+    ports:
+      - "19092:19092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-1:9092,DOCKER://localhost:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,DOCKER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_MIN_IN_SYNC_REPLICAS: 2
+    volumes:
+      - kafka_1_data:/var/lib/kafka-1/data
+    depends_on:
+      - zookeeper
+
+  kafka-2:
+    image: confluentinc/cp-kafka:latest
+    hostname: kafka
+    container_name: kafka-2
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-2:9092,DOCKER://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,DOCKER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_BROKER_ID: 2
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_MIN_IN_SYNC_REPLICAS: 2
+    volumes:
+      - kafka_2_data:/var/lib/kafka-2/data
+    depends_on:
+      - zookeeper
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8082:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+    volumes:
+      - ./kui/config.yml:/etc/kafkaui/config.yaml
+      - ./kui/config.yml:/etc/kafkaui/dynamic_config.yaml
+
+  redis:
+    image: redis:7.4.2
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/var/lib/redis/data
+
+  redis-digest:
+    image: redis:7.4.2
+    container_name: redis-digest
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_digest_data:/var/lib/redis_digest/data
+
 volumes:
   postgres_data:
+  kafka_1_data:
+  kafka_2_data:
+  redis_data:
+  redis_digest_data:

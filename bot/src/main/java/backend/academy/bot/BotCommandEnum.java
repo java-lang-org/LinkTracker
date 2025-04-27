@@ -5,6 +5,8 @@ import com.pengrad.telegrambot.model.BotCommand;
 public enum BotCommandEnum {
     START("/start", "Register chat"),
     END("/end", "Delete chat"),
+    SET_IMMEDIATE("/set_immediate", "Set immediate"),
+    SET_DIGEST("/set_digest", "Set digest"),
     TRACK("/track", "Track link"),
     UNTRACK("/untrack", "Untrack link"),
     LIST("/list", "Show list of tracked links"),
