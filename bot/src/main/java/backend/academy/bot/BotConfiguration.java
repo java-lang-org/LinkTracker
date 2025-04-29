@@ -2,12 +2,15 @@ package backend.academy.bot;
 
 import backend.academy.bot.config.BotConfig;
 import backend.academy.bot.config.HttpStatusRetryPolicy;
+import backend.academy.bot.config.RateLimitingConfig;
+import backend.academy.bot.config.RateLimitingFilter;
 import backend.academy.bot.config.RetryConfig;
 import backend.academy.bot.config.ScrapperConfig;
 import com.pengrad.telegrambot.TelegramBot;
 import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -32,6 +35,7 @@ public class BotConfiguration {
     public RestClient restClient(ScrapperConfig scrapperConfig) {
         return RestClient.builder()
                 .requestFactory(clientHttpRequestFactory(scrapperConfig))
+                .defaultStatusHandler(status -> true, (request, response) -> {})
                 .build();
     }
 
@@ -47,6 +51,14 @@ public class BotConfiguration {
                 new HttpStatusRetryPolicy(retryConfig.maxAttempts(), retryConfig.retryableStatuses()));
 
         return retryTemplate;
+    }
+
+    @Bean
+    public FilterRegistrationBean<RateLimitingFilter> rateLimitingFilter(RateLimitingConfig rateLimitingConfig) {
+        FilterRegistrationBean<RateLimitingFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(new RateLimitingFilter(rateLimitingConfig.maxRequestsPerMinute()));
+        registrationBean.addUrlPatterns("/*");
+        return registrationBean;
     }
 
     private ClientHttpRequestFactory clientHttpRequestFactory(ScrapperConfig scrapperConfig) {
