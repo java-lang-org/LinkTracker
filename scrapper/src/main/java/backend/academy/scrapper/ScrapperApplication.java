@@ -2,6 +2,7 @@ package backend.academy.scrapper;
 
 import backend.academy.scrapper.config.BotConfig;
 import backend.academy.scrapper.config.GitHubConfig;
+import backend.academy.scrapper.config.RateLimitingConfig;
 import backend.academy.scrapper.config.RetryConfig;
 import backend.academy.scrapper.config.ScrapperConfig;
 import backend.academy.scrapper.config.StackOverflowConfig;
@@ -16,7 +17,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
     GitHubConfig.class,
     StackOverflowConfig.class,
     BotConfig.class,
-    RetryConfig.class
+    RetryConfig.class,
+    RateLimitingConfig.class
 })
 @EnableScheduling
 public class ScrapperApplication {

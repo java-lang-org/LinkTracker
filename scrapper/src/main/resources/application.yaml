@@ -92,3 +92,6 @@ retry:
     - 500
     - 502
     - 503
+
+rate-limiting:
+  max-requests-per-minute: 5

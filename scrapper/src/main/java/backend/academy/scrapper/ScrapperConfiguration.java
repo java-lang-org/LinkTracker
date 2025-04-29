@@ -4,6 +4,8 @@ import backend.academy.scrapper.client.internal.bot.BotClient;
 import backend.academy.scrapper.config.BotConfig;
 import backend.academy.scrapper.config.GitHubConfig;
 import backend.academy.scrapper.config.HttpStatusRetryPolicy;
+import backend.academy.scrapper.config.RateLimitingConfig;
+import backend.academy.scrapper.config.RateLimitingFilter;
 import backend.academy.scrapper.config.RetryConfig;
 import backend.academy.scrapper.config.ScrapperConfig;
 import backend.academy.scrapper.config.StackOverflowConfig;
@@ -39,6 +41,7 @@ import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import lombok.AllArgsConstructor;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -74,6 +77,7 @@ public class ScrapperConfiguration {
     public RestClient botRestClient(BotConfig botConfig) {
         return RestClient.builder()
                 .requestFactory(botClientHttpRequestFactory(botConfig))
+                .defaultStatusHandler(status -> true, (request, response) -> {})
                 .build();
     }
 
@@ -161,6 +165,14 @@ public class ScrapperConfiguration {
                 new HttpStatusRetryPolicy(retryConfig.maxAttempts(), retryConfig.retryableStatuses()));
 
         return retryTemplate;
+    }
+
+    @Bean
+    public FilterRegistrationBean<RateLimitingFilter> rateLimitingFilter(RateLimitingConfig rateLimitingConfig) {
+        FilterRegistrationBean<RateLimitingFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(new RateLimitingFilter(rateLimitingConfig.maxRequestsPerMinute()));
+        registrationBean.addUrlPatterns("/*");
+        return registrationBean;
     }
 
     private ClientHttpRequestFactory gitHubClientHttpRequestFactory(GitHubConfig gitHubConfig) {
