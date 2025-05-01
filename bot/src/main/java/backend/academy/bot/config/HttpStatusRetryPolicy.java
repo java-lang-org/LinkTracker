@@ -17,28 +17,37 @@ public class HttpStatusRetryPolicy implements RetryPolicy {
 
     @Override
     public boolean canRetry(RetryContext context) {
-        if (context.getRetryCount() >= maxAttempts) {
+        int attempt = context.getRetryCount();
+
+        if (attempt == 0) {
+            return true;
+        }
+
+        if (attempt >= maxAttempts) {
             return false;
         }
-        Throwable t = context.getLastThrowable();
-        while (t != null) {
-            if (t instanceof HttpStatusCodeException ex
+
+        Throwable cause = context.getLastThrowable();
+        while (cause != null) {
+            if (cause instanceof HttpStatusCodeException ex
                     && retryableStatuses.contains(ex.getStatusCode().value())) {
                 return true;
             }
-            t = t.getCause();
+            cause = cause.getCause();
         }
+
         return false;
     }
 
     @Override
     public RetryContext open(RetryContext parent) {
-        return new RetryContextSupport(parent);
+        return new SimpleRetryContext(parent);
     }
 
     @Override
     public void close(RetryContext context) {}
 
+    @Override
     public void registerThrowable(RetryContext context, Throwable throwable) {
         SimpleRetryContext simpleContext = (SimpleRetryContext) context;
         simpleContext.registerThrowable(throwable);

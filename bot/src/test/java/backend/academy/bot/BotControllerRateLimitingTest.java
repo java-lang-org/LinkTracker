@@ -37,20 +37,36 @@ public class BotControllerRateLimitingTest {
 
         // Act
         for (int i = 0; i < maxRequestsPerMinute; i++) {
-            ResponseEntity<ApiErrorResponse> response =
-                    restClient.post().uri(getUrl()).body(linkUpdate).retrieve().toEntity(ApiErrorResponse.class);
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            ResponseEntity<ApiErrorResponse> responseEntity = restClient
+                    .post()
+                    .uri(getUrl())
+                    .body(linkUpdate)
+                    .retrieve()
+                    .onStatus((status) -> true, ((request, response) -> {}))
+                    .toEntity(ApiErrorResponse.class);
+            assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
         }
 
         // Assert
-        ResponseEntity<ApiErrorResponse> response =
-                restClient.post().uri(getUrl()).body(linkUpdate).retrieve().toEntity(ApiErrorResponse.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        ResponseEntity<ApiErrorResponse> responseEntity = restClient
+                .post()
+                .uri(getUrl())
+                .body(linkUpdate)
+                .retrieve()
+                .onStatus((status) -> true, ((request, response) -> {}))
+                .toEntity(ApiErrorResponse.class);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
 
         Thread.sleep(60_000);
 
-        response = restClient.post().uri(getUrl()).body(linkUpdate).retrieve().toEntity(ApiErrorResponse.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        responseEntity = restClient
+                .post()
+                .uri(getUrl())
+                .body(linkUpdate)
+                .retrieve()
+                .onStatus((status) -> true, ((request, response) -> {}))
+                .toEntity(ApiErrorResponse.class);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     private String getUrl() {

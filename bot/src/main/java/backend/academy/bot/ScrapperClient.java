@@ -2,7 +2,6 @@ package backend.academy.bot;
 
 import backend.academy.bot.config.ScrapperConfig;
 import backend.academy.dto.AddLinkRequest;
-import backend.academy.dto.ApiErrorResponse;
 import backend.academy.dto.LinkResponse;
 import backend.academy.dto.ListLinksResponse;
 import backend.academy.dto.RemoveLinkRequest;
@@ -15,8 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.retry.RetryCallback;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClient;
 
@@ -143,12 +140,10 @@ public class ScrapperClient {
     }
 
     private ResponseEntity<?> handleException(Exception e, String action, long chatId) {
-        if (e instanceof HttpClientErrorException || e instanceof HttpServerErrorException) {
-            HttpStatusCodeException httpEx = (HttpStatusCodeException) e;
-            log.error("Error {} {}: {} - {}", action, chatId, httpEx.getStatusCode(), httpEx.getResponseBodyAsString());
-            return ResponseEntity.status(httpEx.getStatusCode()).body(httpEx.getResponseBodyAs(ApiErrorResponse.class));
+        log.error("Error {} {}: ", action, chatId, e);
+        if (e instanceof HttpStatusCodeException httpEx) {
+            return ResponseEntity.status(httpEx.getStatusCode()).build();
         } else {
-            log.error("Unexpected error while {} {}", action, chatId, e);
             return ResponseEntity.internalServerError().build();
         }
     }
