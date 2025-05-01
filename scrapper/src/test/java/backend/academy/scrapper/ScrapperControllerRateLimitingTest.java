@@ -35,33 +35,36 @@ public class ScrapperControllerRateLimitingTest {
 
         // Act
         for (int i = 0; i < maxRequestsPerMinute; i++) {
-            ResponseEntity<ListLinksResponse> response = botRestClient
+            ResponseEntity<ListLinksResponse> responseEntity = botRestClient
                     .get()
                     .uri(getUrl())
                     .headers(headers -> headers.addAll(headersWithChatId(chatId)))
                     .retrieve()
+                    .onStatus((status) -> true, ((request, response) -> {}))
                     .toEntity(ListLinksResponse.class);
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         }
 
         // Assert
-        ResponseEntity<ListLinksResponse> response = botRestClient
+        ResponseEntity<ListLinksResponse> responseEntity = botRestClient
                 .get()
                 .uri(getUrl())
                 .headers(headers -> headers.addAll(headersWithChatId(chatId)))
                 .retrieve()
+                .onStatus((status) -> true, ((request, response) -> {}))
                 .toEntity(ListLinksResponse.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
 
         Thread.sleep(60_000);
 
-        response = botRestClient
+        responseEntity = botRestClient
                 .get()
                 .uri(getUrl())
                 .headers(headers -> headers.addAll(headersWithChatId(chatId)))
                 .retrieve()
+                .onStatus((status) -> true, ((request, response) -> {}))
                 .toEntity(ListLinksResponse.class);
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     private String getUrl() {
@@ -70,7 +73,7 @@ public class ScrapperControllerRateLimitingTest {
 
     private HttpHeaders headersWithChatId(long chatId) {
         HttpHeaders headers = new HttpHeaders();
-        headers.set("Tg-Chat-Id", String.valueOf(chatId));
+        headers.set("Tresponseg-Chat-Id", String.valueOf(chatId));
         return headers;
     }
 }

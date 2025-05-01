@@ -37,6 +37,7 @@ import backend.academy.scrapper.service.impl.HttpNotificationSendingService;
 import backend.academy.scrapper.service.impl.KafkaNotificationSendingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -44,12 +45,17 @@ import lombok.AllArgsConstructor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpRequest;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
 import org.springframework.retry.support.RetryTemplate;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
 
 @Configuration
@@ -63,6 +69,7 @@ public class ScrapperConfiguration {
                 .defaultHeader("X-GitHub-Api-Version", "2022-11-28")
                 .defaultHeader("Authorization", "Bearer " + gitHubConfig.token())
                 .requestFactory(gitHubClientHttpRequestFactory(gitHubConfig))
+                .defaultStatusHandler(this::statusPredicate, this::errorHandler)
                 .build();
     }
 
@@ -70,6 +77,7 @@ public class ScrapperConfiguration {
     public RestClient stackOverflowClient(StackOverflowConfig stackOverflowConfig) {
         return RestClient.builder()
                 .requestFactory(stackOverflowClientHttpRequestFactory(stackOverflowConfig))
+                .defaultStatusHandler(this::statusPredicate, this::errorHandler)
                 .build();
     }
 
@@ -77,7 +85,7 @@ public class ScrapperConfiguration {
     public RestClient botRestClient(BotConfig botConfig) {
         return RestClient.builder()
                 .requestFactory(botClientHttpRequestFactory(botConfig))
-                .defaultStatusHandler(status -> true, (request, response) -> {})
+                .defaultStatusHandler(this::statusPredicate, this::errorHandler)
                 .build();
     }
 
@@ -203,5 +211,32 @@ public class ScrapperConfiguration {
                 Duration.ofSeconds(botConfig.timeoutsInSec().connectionRequest()));
         factory.setReadTimeout(Duration.ofSeconds(botConfig.timeoutsInSec().read()));
         return factory;
+    }
+
+    private boolean statusPredicate(HttpStatusCode status) {
+        return status.is4xxClientError() || status.is5xxServerError();
+    }
+
+    @SuppressWarnings("PMD.UnusedFormalParameter")
+    private void errorHandler(HttpRequest request, ClientHttpResponse response) throws IOException {
+        HttpStatusCode statusCode = response.getStatusCode();
+
+        if (statusCode.is4xxClientError()) {
+            throw HttpClientErrorException.create(
+                    statusCode,
+                    response.getStatusText(),
+                    response.getHeaders(),
+                    response.getBody().readAllBytes(),
+                    null);
+        }
+
+        if (statusCode.is5xxServerError()) {
+            throw HttpServerErrorException.create(
+                    statusCode,
+                    response.getStatusText(),
+                    response.getHeaders(),
+                    response.getBody().readAllBytes(),
+                    null);
+        }
     }
 }
