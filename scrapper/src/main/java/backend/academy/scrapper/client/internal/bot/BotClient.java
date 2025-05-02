@@ -3,6 +3,8 @@ package backend.academy.scrapper.client.internal.bot;
 import backend.academy.dto.ApiErrorResponse;
 import backend.academy.dto.LinkUpdate;
 import backend.academy.scrapper.config.BotConfig;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +26,7 @@ public class BotClient {
         this.botConfig = botConfig;
     }
 
+    @CircuitBreaker(name = "bot-client", fallbackMethod = "updatesFallback")
     public void updates(LinkUpdate linkUpdate) {
         try {
             ResponseEntity<ApiErrorResponse> response = retryTemplate.execute(context -> restClient
@@ -38,5 +41,11 @@ public class BotClient {
         } catch (Exception e) {
             log.error("Error: {}", e.getMessage());
         }
+    }
+
+    @SuppressWarnings("PMD.UnusedPrivateMethod")
+    private List<String> updatesFallback(LinkUpdate linkUpdate, Throwable throwable) {
+        log.warn("Warning while executing \"updates for bot client\" for link {}", linkUpdate.url(), throwable);
+        return List.of();
     }
 }

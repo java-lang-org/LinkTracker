@@ -3,8 +3,10 @@ package backend.academy.scrapper.client.external.stackoverflow;
 import backend.academy.scrapper.Link;
 import backend.academy.scrapper.client.external.ExternalClient;
 import backend.academy.scrapper.config.StackOverflowConfig;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.List;
 import java.util.stream.Stream;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
+@Slf4j
 public class StackOverflowClient extends ExternalClient {
     private final RetryTemplate retryTemplate;
 
@@ -25,6 +28,7 @@ public class StackOverflowClient extends ExternalClient {
     }
 
     @Override
+    @CircuitBreaker(name = "stackoverflow-client", fallbackMethod = "getRecentEventsFallback")
     public List<String> getRecentEvents(Link link) {
         String questionId = extractQuestionId(link.uri().getPath());
 
@@ -100,5 +104,14 @@ public class StackOverflowClient extends ExternalClient {
         return String.format(
                 "**%s** (by %s)%n%s%n%s",
                 question.title(), event.ownerName(), event.creationDate(), truncate(event.body()));
+    }
+
+    @SuppressWarnings("PMD.UnusedPrivateMethod")
+    private List<String> getRecentEventsFallback(Link link, Throwable throwable) {
+        log.warn(
+                "Warning while executing \"get recent events for stackoverflow client\" for link {}",
+                link.url(),
+                throwable);
+        return List.of();
     }
 }
