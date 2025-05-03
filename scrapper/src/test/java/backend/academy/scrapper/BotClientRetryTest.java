@@ -24,6 +24,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Import({TestcontainersConfiguration.class})
 @SpringBootTest(properties = "spring.config.name=application-test")
@@ -82,7 +83,11 @@ class BotClientRetryTest {
         stubFor(post(urlEqualTo("/updates")).willReturn(aResponse().withStatus(400)));
 
         // Act
-        botClient.updates(new LinkUpdate(1L, "https://github.com/python/mypy", "description", List.of(10L, 20L)));
+        try {
+            botClient.updates(new LinkUpdate(1L, "https://github.com/python/mypy", "description", List.of(10L, 20L)));
+        } catch (HttpServerErrorException e) {
+            // empty
+        }
 
         // Assert
         verify(1, postRequestedFor(urlEqualTo("/updates")));

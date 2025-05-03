@@ -20,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Import({TestcontainersConfiguration.class})
 @SpringBootTest(properties = "spring.config.name=application-test")
@@ -57,20 +58,28 @@ public class BotClientCircuitBreakerTest {
         LinkUpdate linkUpdate =
                 new LinkUpdate(1L, "https://github.com/python/cpython", "description", List.of(10L, 20L));
 
-        wireMockServer.stubFor(get(urlEqualTo("/links"))
+        wireMockServer.stubFor(get(urlEqualTo("/updates"))
                 .willReturn(aResponse().withFixedDelay(5000).withStatus(200)));
 
         // Act
         for (int i = 0; i < 5; i++) {
-            botClient.updates(linkUpdate);
+            updates(linkUpdate);
         }
 
         long startMillis = System.currentTimeMillis();
-        botClient.updates(linkUpdate);
+        updates(linkUpdate);
         long endMillis = System.currentTimeMillis();
         long durationMillis = endMillis - startMillis;
 
         // Assert
         assertTrue(durationMillis < 100);
+    }
+
+    private void updates(LinkUpdate linkUpdate) {
+        try {
+            botClient.updates(linkUpdate);
+        } catch (HttpServerErrorException e) {
+            // empty
+        }
     }
 }

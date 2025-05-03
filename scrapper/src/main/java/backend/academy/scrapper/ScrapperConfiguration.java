@@ -33,6 +33,7 @@ import backend.academy.scrapper.repository.impl.SqlFilterRepository;
 import backend.academy.scrapper.repository.impl.SqlLinkRepository;
 import backend.academy.scrapper.repository.impl.SqlTagRepository;
 import backend.academy.scrapper.service.NotificationSendingService;
+import backend.academy.scrapper.service.impl.CompositeNotificationSendingService;
 import backend.academy.scrapper.service.impl.HttpNotificationSendingService;
 import backend.academy.scrapper.service.impl.KafkaNotificationSendingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -142,11 +143,11 @@ public class ScrapperConfiguration {
             ObjectMapper objectMapper,
             NotificationsTopicProperties notificationsTopicProperties,
             KafkaTemplate<Long, String> kafkaTemplate) {
-        if (scrapperConfig.messageTransport() == ScrapperConfig.MessageTransport.HTTP) {
-            return new HttpNotificationSendingService(botClient);
-        } else {
-            return new KafkaNotificationSendingService(objectMapper, notificationsTopicProperties, kafkaTemplate);
-        }
+        HttpNotificationSendingService httpNotificationSendingService = new HttpNotificationSendingService(botClient);
+        KafkaNotificationSendingService kafkaNotificationSendingService =
+                new KafkaNotificationSendingService(objectMapper, notificationsTopicProperties, kafkaTemplate);
+        return new CompositeNotificationSendingService(
+                scrapperConfig, httpNotificationSendingService, kafkaNotificationSendingService);
     }
 
     @Bean
