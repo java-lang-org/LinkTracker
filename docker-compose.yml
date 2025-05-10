@@ -135,6 +135,7 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
     restart: unless-stopped
 
   grafana:
@@ -142,6 +143,10 @@ services:
     container_name: grafana
     ports:
       - "3000:3000"
+    volumes:
+      - ./grafana/grafana.yaml:/etc/grafana/grafana.yaml
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
     restart: unless-stopped
 
 volumes:
@@ -150,3 +155,5 @@ volumes:
   kafka_2_data:
   redis_data:
   redis_digest_data:
+  prometheus_data:
+  grafana_data:
