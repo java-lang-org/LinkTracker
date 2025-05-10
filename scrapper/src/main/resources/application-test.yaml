@@ -109,3 +109,15 @@ resilience4j:
         base-config: default
       bot-client:
         base-config: default
+
+management:
+  server:
+    port: 9081
+  endpoints:
+    web:
+      base-path: "/"
+      path-mapping:
+        prometheus: "metrics"
+      exposure:
+        include:
+          - prometheus

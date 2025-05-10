@@ -63,3 +63,15 @@ resilience4j:
     instances:
       scrapper-client:
         baseConfig: default
+
+management:
+  server:
+    port: 9080
+  endpoints:
+    web:
+      base-path: "/"
+      path-mapping:
+        prometheus: "metrics"
+      exposure:
+        include:
+          - prometheus

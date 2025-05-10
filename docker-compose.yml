@@ -3,6 +3,7 @@ services:
     build: ./bot
     ports:
       - "8080:8080"
+      - "9080:9080"
     environment:
       TELEGRAM_TOKEN: $TELEGRAM_TOKEN
     depends_on:
@@ -14,6 +15,7 @@ services:
     build: ./scrapper
     ports:
       - "8081:8081"
+      - "9081:9081"
     environment:
       GITHUB_TOKEN: $GITHUB_TOKEN
     depends_on:
@@ -125,6 +127,22 @@ services:
       - "6380:6379"
     volumes:
       - redis_digest_data:/var/lib/redis_digest/data
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-oss
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
 
 volumes:
   postgres_data:
