@@ -1,10 +1,4 @@
 app:
-  github-token: ${GITHUB_TOKEN}
-
-  stackoverflow:
-    key: ${SO_TOKEN_KEY}
-    access-token: ${SO_ACCESS_TOKEN}
-
   fixed-rate-string: 60_000 # in milliseconds
 
   data-base:
@@ -60,10 +54,58 @@ springdoc:
     path: /swagger-ui
 
 github:
+  token: ${GITHUB_TOKEN}
+
   base-url: https://api.github.com
 
+  timeouts-in-sec:
+    connect: 3
+    connection-request: 5
+    read: 5
+
 stackoverflow:
+  key: ${SO_TOKEN_KEY}
+  access-token: ${SO_ACCESS_TOKEN}
+
   base-url: https://api.stackexchange.com/2.3
+
+  timeouts-in-sec:
+    connect: 3
+    connection-request: 5
+    read: 5
 
 bot:
   url: http://bot:8080
+
+  timeouts-in-sec:
+    connect: 1
+    connection-request: 2
+    read: 2
+
+retry:
+  back-off-period: 2000 # in ms
+  max-attempts: 2
+  retryable-statuses:
+    - 500
+    - 502
+    - 503
+
+rate-limiting:
+  max-requests-per-minute: 5
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 5
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 1
+    instances:
+      github-client:
+        baseConfig: default
+      stackoverflow-client:
+        base-config: default
+      bot-client:
+        base-config: default

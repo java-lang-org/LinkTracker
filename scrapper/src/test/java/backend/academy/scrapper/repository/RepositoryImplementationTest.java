@@ -2,8 +2,8 @@ package backend.academy.scrapper.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import backend.academy.scrapper.ScrapperConfig;
 import backend.academy.scrapper.TestcontainersConfiguration;
+import backend.academy.scrapper.config.ScrapperConfig;
 import backend.academy.scrapper.repository.impl.OrmChatLinkFilterRepository;
 import backend.academy.scrapper.repository.impl.OrmChatLinkRepository;
 import backend.academy.scrapper.repository.impl.OrmChatLinkTagRepository;

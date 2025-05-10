@@ -1,6 +1,14 @@
 package backend.academy.scrapper;
 
 import backend.academy.scrapper.client.internal.bot.BotClient;
+import backend.academy.scrapper.config.BotConfig;
+import backend.academy.scrapper.config.GitHubConfig;
+import backend.academy.scrapper.config.HttpStatusRetryPolicy;
+import backend.academy.scrapper.config.RateLimitingConfig;
+import backend.academy.scrapper.config.RateLimitingFilter;
+import backend.academy.scrapper.config.RetryConfig;
+import backend.academy.scrapper.config.ScrapperConfig;
+import backend.academy.scrapper.config.StackOverflowConfig;
 import backend.academy.scrapper.config.properties.NotificationsTopicProperties;
 import backend.academy.scrapper.entity.ChatEntity;
 import backend.academy.scrapper.repository.ChatLinkFilterRepository;
@@ -25,41 +33,61 @@ import backend.academy.scrapper.repository.impl.SqlFilterRepository;
 import backend.academy.scrapper.repository.impl.SqlLinkRepository;
 import backend.academy.scrapper.repository.impl.SqlTagRepository;
 import backend.academy.scrapper.service.NotificationSendingService;
+import backend.academy.scrapper.service.impl.CompositeNotificationSendingService;
 import backend.academy.scrapper.service.impl.HttpNotificationSendingService;
 import backend.academy.scrapper.service.impl.KafkaNotificationSendingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import java.io.IOException;
+import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import lombok.AllArgsConstructor;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpRequest;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.retry.backoff.FixedBackOffPolicy;
+import org.springframework.retry.support.RetryTemplate;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClient;
 
 @Configuration
 @AllArgsConstructor
 public class ScrapperConfiguration {
-    ScrapperConfig scrapperConfig;
     DataBaseRepositoryFactory dataBaseRepositoryFactory;
 
     @Bean(name = "gitHubRestClient")
-    public RestClient gitHubRestClient() {
+    public RestClient gitHubRestClient(GitHubConfig gitHubConfig) {
         return RestClient.builder()
                 .defaultHeader("X-GitHub-Api-Version", "2022-11-28")
-                .defaultHeader("Authorization", "Bearer " + scrapperConfig.githubToken())
+                .defaultHeader("Authorization", "Bearer " + gitHubConfig.token())
+                .requestFactory(gitHubClientHttpRequestFactory(gitHubConfig))
+                .defaultStatusHandler(this::statusPredicate, this::errorHandler)
                 .build();
     }
 
     @Bean(name = "stackOverflowRestClient")
-    public RestClient stackOverflowClient() {
-        return RestClient.builder().build();
+    public RestClient stackOverflowClient(StackOverflowConfig stackOverflowConfig) {
+        return RestClient.builder()
+                .requestFactory(stackOverflowClientHttpRequestFactory(stackOverflowConfig))
+                .defaultStatusHandler(this::statusPredicate, this::errorHandler)
+                .build();
     }
 
     @Bean(name = "botRestClient")
-    public RestClient botRestClient() {
-        return RestClient.builder().build();
+    public RestClient botRestClient(BotConfig botConfig) {
+        return RestClient.builder()
+                .requestFactory(botClientHttpRequestFactory(botConfig))
+                .defaultStatusHandler(this::statusPredicate, this::errorHandler)
+                .build();
     }
 
     @Bean
@@ -115,11 +143,11 @@ public class ScrapperConfiguration {
             ObjectMapper objectMapper,
             NotificationsTopicProperties notificationsTopicProperties,
             KafkaTemplate<Long, String> kafkaTemplate) {
-        if (scrapperConfig.messageTransport() == ScrapperConfig.MessageTransport.HTTP) {
-            return new HttpNotificationSendingService(botClient);
-        } else {
-            return new KafkaNotificationSendingService(objectMapper, notificationsTopicProperties, kafkaTemplate);
-        }
+        HttpNotificationSendingService httpNotificationSendingService = new HttpNotificationSendingService(botClient);
+        KafkaNotificationSendingService kafkaNotificationSendingService =
+                new KafkaNotificationSendingService(objectMapper, notificationsTopicProperties, kafkaTemplate);
+        return new CompositeNotificationSendingService(
+                scrapperConfig, httpNotificationSendingService, kafkaNotificationSendingService);
     }
 
     @Bean
@@ -132,5 +160,84 @@ public class ScrapperConfiguration {
         mapper.registerModule(module);
 
         return mapper;
+    }
+
+    @Bean
+    public RetryTemplate retryTemplate(RetryConfig retryConfig) {
+        RetryTemplate retryTemplate = new RetryTemplate();
+
+        FixedBackOffPolicy fixedBackOffPolicy = new FixedBackOffPolicy();
+        fixedBackOffPolicy.setBackOffPeriod(retryConfig.backOffPeriod());
+        retryTemplate.setBackOffPolicy(fixedBackOffPolicy);
+
+        retryTemplate.setRetryPolicy(
+                new HttpStatusRetryPolicy(retryConfig.maxAttempts(), retryConfig.retryableStatuses()));
+
+        return retryTemplate;
+    }
+
+    @Bean
+    public FilterRegistrationBean<RateLimitingFilter> rateLimitingFilter(RateLimitingConfig rateLimitingConfig) {
+        FilterRegistrationBean<RateLimitingFilter> registrationBean = new FilterRegistrationBean<>();
+        registrationBean.setFilter(new RateLimitingFilter(rateLimitingConfig.maxRequestsPerMinute()));
+        registrationBean.addUrlPatterns("/*");
+        return registrationBean;
+    }
+
+    private ClientHttpRequestFactory gitHubClientHttpRequestFactory(GitHubConfig gitHubConfig) {
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
+        factory.setConnectTimeout(
+                Duration.ofSeconds(gitHubConfig.timeoutsInSec().connect()));
+        factory.setConnectionRequestTimeout(
+                Duration.ofSeconds(gitHubConfig.timeoutsInSec().connectionRequest()));
+        factory.setReadTimeout(Duration.ofSeconds(gitHubConfig.timeoutsInSec().read()));
+        return factory;
+    }
+
+    private ClientHttpRequestFactory stackOverflowClientHttpRequestFactory(StackOverflowConfig stackOverflowConfig) {
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
+        factory.setConnectTimeout(
+                Duration.ofSeconds(stackOverflowConfig.timeoutsInSec().connect()));
+        factory.setConnectionRequestTimeout(
+                Duration.ofSeconds(stackOverflowConfig.timeoutsInSec().connectionRequest()));
+        factory.setReadTimeout(
+                Duration.ofSeconds(stackOverflowConfig.timeoutsInSec().read()));
+        return factory;
+    }
+
+    private ClientHttpRequestFactory botClientHttpRequestFactory(BotConfig botConfig) {
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
+        factory.setConnectTimeout(Duration.ofSeconds(botConfig.timeoutsInSec().connect()));
+        factory.setConnectionRequestTimeout(
+                Duration.ofSeconds(botConfig.timeoutsInSec().connectionRequest()));
+        factory.setReadTimeout(Duration.ofSeconds(botConfig.timeoutsInSec().read()));
+        return factory;
+    }
+
+    private boolean statusPredicate(HttpStatusCode status) {
+        return status.is4xxClientError() || status.is5xxServerError();
+    }
+
+    @SuppressWarnings("PMD.UnusedFormalParameter")
+    private void errorHandler(HttpRequest request, ClientHttpResponse response) throws IOException {
+        HttpStatusCode statusCode = response.getStatusCode();
+
+        if (statusCode.is4xxClientError()) {
+            throw HttpClientErrorException.create(
+                    statusCode,
+                    response.getStatusText(),
+                    response.getHeaders(),
+                    response.getBody().readAllBytes(),
+                    null);
+        }
+
+        if (statusCode.is5xxServerError()) {
+            throw HttpServerErrorException.create(
+                    statusCode,
+                    response.getStatusText(),
+                    response.getHeaders(),
+                    response.getBody().readAllBytes(),
+                    null);
+        }
     }
 }
