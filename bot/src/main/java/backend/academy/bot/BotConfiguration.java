@@ -85,7 +85,7 @@ public class BotConfiguration {
     private void errorHandler(HttpRequest request, ClientHttpResponse response) throws IOException {
         HttpStatusCode statusCode = response.getStatusCode();
 
-        if (statusCode.is4xxClientError()) {
+        if (statusCode.value() == 429) {
             throw HttpClientErrorException.create(
                     statusCode,
                     response.getStatusText(),

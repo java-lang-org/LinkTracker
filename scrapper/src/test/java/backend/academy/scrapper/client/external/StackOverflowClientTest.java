@@ -42,7 +42,7 @@ class StackOverflowClientTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        when(stackOverflowConfig.url()).thenReturn("https://api.stackexchange.com/2.3");
+        when(stackOverflowConfig.baseUrl()).thenReturn("https://api.stackexchange.com/2.3");
         stackOverflowClient = new StackOverflowClient(stackOverflowConfig, restClient, retryTemplate);
 
         link = Link.getInstance("https://stackoverflow.com/questions/12345", LinkType.STACK_OVERFLOW, pastDate);

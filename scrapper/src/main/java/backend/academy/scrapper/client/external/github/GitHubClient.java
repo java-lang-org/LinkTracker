@@ -23,7 +23,7 @@ public class GitHubClient extends ExternalClient {
             GitHubConfig gitHubConfig,
             @Qualifier("gitHubRestClient") RestClient restClient,
             RetryTemplate retryTemplate) {
-        super(gitHubConfig.url(), restClient);
+        super(gitHubConfig.baseUrl(), restClient);
 
         this.retryTemplate = retryTemplate;
     }

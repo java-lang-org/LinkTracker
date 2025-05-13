@@ -29,43 +29,43 @@ public class ChatServiceImpl implements backend.academy.scrapper.service.ChatSer
 
     @Override
     public void deleteChat(long chatId) {
-        ChatEntity chatEntity = getChatEntityOrThrow(chatId);
+        ChatEntity chatEntity = getChatEntityOrThrow(chatId, HttpStatus.NOT_FOUND);
         linkService.deleteChat(chatEntity);
         chatRepository.delete(chatEntity);
     }
 
     @Override
     public void setImmediate(long chatId) {
-        ChatEntity chatEntity = getChatEntityOrThrow(chatId);
+        ChatEntity chatEntity = getChatEntityOrThrow(chatId, HttpStatus.BAD_REQUEST);
         chatRepository.setNotificationMode(chatEntity.id(), NotificationMode.IMMEDIATE);
     }
 
     @Override
     public void setDigest(long chatId) {
-        ChatEntity chatEntity = getChatEntityOrThrow(chatId);
+        ChatEntity chatEntity = getChatEntityOrThrow(chatId, HttpStatus.BAD_REQUEST);
         chatRepository.setNotificationMode(chatEntity.id(), NotificationMode.DIGEST);
     }
 
     @Override
     public List<LinkResponse> getLinks(long chatId) {
-        return linkService.getLinks(getChatEntityOrThrow(chatId));
+        return linkService.getLinks(getChatEntityOrThrow(chatId, HttpStatus.BAD_REQUEST));
     }
 
     @Override
     public List<LinkResponse> getLinksByTag(long chatId, String tagName) {
-        return linkService.getLinksByTag(getChatEntityOrThrow(chatId), tagName);
+        return linkService.getLinksByTag(getChatEntityOrThrow(chatId, HttpStatus.BAD_REQUEST), tagName);
     }
 
     @Override
     public LinkResponse addLink(long chatId, Link link, List<String> tags, List<String> filters) {
-        linkService.addLink(getChatEntityOrThrow(chatId), link, tags, filters);
+        linkService.addLink(getChatEntityOrThrow(chatId, HttpStatus.BAD_REQUEST), link, tags, filters);
         return new LinkResponse(chatId, link.url(), tags, filters);
     }
 
     @Override
     public LinkResponse removeLink(long chatId, String url) {
         return linkService
-                .removeLink(getChatEntityOrThrow(chatId), url)
+                .removeLink(getChatEntityOrThrow(chatId, HttpStatus.BAD_REQUEST), url)
                 .orElseThrow(() -> new ChatException(HttpStatus.NOT_FOUND, "Link doesn't exist."));
     }
 
@@ -85,10 +85,9 @@ public class ChatServiceImpl implements backend.academy.scrapper.service.ChatSer
         }
     }
 
-    private ChatEntity getChatEntityOrThrow(long chatId) {
+    private ChatEntity getChatEntityOrThrow(long chatId, HttpStatus httpStatus) {
         return chatRepository
                 .findById(chatId)
-                .orElseThrow(
-                        () -> new ChatException(HttpStatus.BAD_REQUEST, "You must be registered to use this command."));
+                .orElseThrow(() -> new ChatException(httpStatus, "You must be registered to use this command."));
     }
 }

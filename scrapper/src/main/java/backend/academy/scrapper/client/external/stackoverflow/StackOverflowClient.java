@@ -22,7 +22,7 @@ public class StackOverflowClient extends ExternalClient {
             StackOverflowConfig stackOverflowConfig,
             @Qualifier("stackOverflowRestClient") RestClient restClient,
             RetryTemplate retryTemplate) {
-        super(stackOverflowConfig.url(), restClient);
+        super(stackOverflowConfig.baseUrl(), restClient);
 
         this.retryTemplate = retryTemplate;
     }

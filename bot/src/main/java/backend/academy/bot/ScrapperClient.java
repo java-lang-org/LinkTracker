@@ -2,15 +2,19 @@ package backend.academy.bot;
 
 import backend.academy.bot.config.ScrapperConfig;
 import backend.academy.dto.AddLinkRequest;
+import backend.academy.dto.ApiErrorResponse;
 import backend.academy.dto.LinkResponse;
 import backend.academy.dto.ListLinksResponse;
 import backend.academy.dto.RemoveLinkRequest;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.retry.RetryCallback;
@@ -24,86 +28,95 @@ import org.springframework.web.client.RestClient;
 public class ScrapperClient {
     private final RetryTemplate retryTemplate;
     private final RestClient restClient;
+    private final ObjectMapper objectMapper;
     private final ScrapperConfig scrapperConfig;
 
     @CircuitBreaker(name = "scrapper-client", fallbackMethod = "registerChatFallback")
     public ResponseEntity<?> registerChat(long chatId) {
-        return executeWithRetry(context -> restClient
+        ResponseEntity<String> responseEntity = executeWithRetry(context -> restClient
                 .post()
                 .uri(scrapperConfig.url() + "/tg-chat/{id}", chatId)
                 .retrieve()
-                .toBodilessEntity());
+                .toEntity(String.class));
+        return convert(responseEntity, Void.class);
     }
 
     @CircuitBreaker(name = "scrapper-client", fallbackMethod = "deleteChatFallback")
     public ResponseEntity<?> deleteChat(long chatId) {
-        return executeWithRetry(context -> restClient
+        ResponseEntity<String> responseEntity = executeWithRetry(context -> restClient
                 .delete()
                 .uri(scrapperConfig.url() + "/tg-chat/{id}", chatId)
                 .retrieve()
-                .toBodilessEntity());
+                .toEntity(String.class));
+        return convert(responseEntity, Void.class);
     }
 
     @CircuitBreaker(name = "scrapper-client", fallbackMethod = "setImmediateFallback")
     public ResponseEntity<?> setImmediate(long chatId) {
-        return executeWithRetry(context -> restClient
+        ResponseEntity<String> responseEntity = executeWithRetry(context -> restClient
                 .put()
                 .uri(scrapperConfig.url() + "/set-immediate/{id}", chatId)
                 .retrieve()
-                .toBodilessEntity());
+                .toEntity(String.class));
+        return convert(responseEntity, Void.class);
     }
 
     @CircuitBreaker(name = "scrapper-client", fallbackMethod = "setDigestFallback")
     public ResponseEntity<?> setDigest(long chatId) {
-        return executeWithRetry(context -> restClient
+        ResponseEntity<String> responseEntity = executeWithRetry(context -> restClient
                 .put()
                 .uri(scrapperConfig.url() + "/set-digest/{id}", chatId)
                 .retrieve()
-                .toBodilessEntity());
+                .toEntity(String.class));
+        return convert(responseEntity, Void.class);
     }
 
     @CircuitBreaker(name = "scrapper-client", fallbackMethod = "getLinksFallback")
     public ResponseEntity<?> getLinks(long chatId) {
-        return executeWithRetry(context -> restClient
+        ResponseEntity<String> responseEntity = executeWithRetry(context -> restClient
                 .get()
                 .uri(scrapperConfig.url() + "/links")
                 .headers(headers -> headers.addAll(headersWithChatId(chatId)))
                 .retrieve()
-                .toEntity(ListLinksResponse.class));
+                .toEntity(String.class));
+        return convert(responseEntity, ListLinksResponse.class);
     }
 
     @CircuitBreaker(name = "scrapper-client", fallbackMethod = "getLinksByTagFallback")
     public ResponseEntity<?> getLinksByTag(long chatId, String tagName) {
-        return executeWithRetry(context -> restClient
+        ResponseEntity<String> responseEntity = executeWithRetry(context -> restClient
                 .get()
                 .uri(scrapperConfig.url() + "/links/{tagName}", tagName)
                 .headers(headers -> headers.addAll(headersWithChatId(chatId)))
                 .retrieve()
-                .toEntity(ListLinksResponse.class));
+                .toEntity(String.class));
+        return convert(responseEntity, ListLinksResponse.class);
     }
 
     @CircuitBreaker(name = "scrapper-client", fallbackMethod = "addLinkTrackingFallback")
     public ResponseEntity<?> addLinkTracking(long chatId, BotState botState) {
-        return executeWithRetry(context -> restClient
+        ResponseEntity<String> responseEntity = executeWithRetry(context -> restClient
                 .post()
                 .uri(scrapperConfig.url() + "/links")
                 .contentType(MediaType.APPLICATION_JSON)
                 .headers(headers -> headers.addAll(headersWithChatId(chatId)))
                 .body(new AddLinkRequest(botState.url(), botState.tags(), botState.filters()))
                 .retrieve()
-                .toEntity(LinkResponse.class));
+                .toEntity(String.class));
+        return convert(responseEntity, LinkResponse.class);
     }
 
     @CircuitBreaker(name = "scrapper-client", fallbackMethod = "removeLinkTrackingFallback")
     public ResponseEntity<?> removeLinkTracking(long chatId, String uri) {
-        return executeWithRetry(context -> restClient
+        ResponseEntity<String> responseEntity = executeWithRetry(context -> restClient
                 .method(HttpMethod.DELETE)
                 .uri(scrapperConfig.url() + "/links")
                 .contentType(MediaType.APPLICATION_JSON)
                 .headers(headers -> headers.addAll(headersWithChatId(chatId)))
                 .body(new RemoveLinkRequest(uri))
                 .retrieve()
-                .toEntity(LinkResponse.class));
+                .toEntity(String.class));
+        return convert(responseEntity, LinkResponse.class);
     }
 
     private <T, E extends Throwable> T executeWithRetry(RetryCallback<T, E> retryCallback) throws E {
@@ -114,6 +127,31 @@ public class ScrapperClient {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Tg-Chat-Id", String.valueOf(chatId));
         return headers;
+    }
+
+    private <T> ResponseEntity<?> convert(ResponseEntity<String> responseEntity, Class<T> targetClass) {
+        HttpStatusCode statusCode = responseEntity.getStatusCode();
+
+        String body = responseEntity.getBody();
+        if (body == null) {
+            return ResponseEntity.status(statusCode).build();
+        }
+
+        try {
+            Object parsedBody;
+            if (statusCode.is2xxSuccessful()) {
+                parsedBody = objectMapper.readValue(body, targetClass);
+            } else if (statusCode.is4xxClientError()) {
+                parsedBody = objectMapper.readValue(body, ApiErrorResponse.class);
+            } else {
+                return responseEntity;
+            }
+
+            return ResponseEntity.status(statusCode).body(parsedBody);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to deserialize response body for status {}: {}", statusCode.value(), body, e);
+            throw new IllegalArgumentException("Unable to parse response body for status " + statusCode.value(), e);
+        }
     }
 
     @SuppressWarnings("PMD.UnusedPrivateMethod")

@@ -103,7 +103,7 @@ public class ScrapperController {
         MethodArgumentNotValidException.class
     })
     public ResponseEntity<ApiErrorResponse> handleBadRequestExceptions(Exception e) {
-        log.error("Bad request: [{}] - {}", e.getClass().getSimpleName(), e.getMessage());
+        logException(e);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiErrorResponse(
                         "Incorrect request parameters",
@@ -117,6 +117,7 @@ public class ScrapperController {
 
     @ExceptionHandler({ChatException.class, InvalidRequestException.class})
     public ResponseEntity<ApiErrorResponse> handleInternalExceptions(ResponseStatusException e) {
+        logException(e);
         return ResponseEntity.status(e.getStatusCode())
                 .body(new ApiErrorResponse(
                         e.getReason(),
@@ -127,5 +128,9 @@ public class ScrapperController {
                                 .limit(STACK_TRACE_MAX_SIZE)
                                 .map(StackTraceElement::toString)
                                 .toList()));
+    }
+
+    private void logException(Exception e) {
+        log.error("Exception: [{}] - {}", e.getClass().getSimpleName(), e.getMessage());
     }
 }
