@@ -38,30 +38,35 @@ public class ScrapperController {
 
     private final ChatService chatService;
 
+    @CountUserMessage
     @PostMapping(path = "/tg-chat/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> registerChat(@PathVariable long id) {
         chatService.registerChat(id);
         return ResponseEntity.ok().build();
     }
 
+    @CountUserMessage
     @DeleteMapping(path = "/tg-chat/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> deleteChat(@PathVariable long id) {
         chatService.deleteChat(id);
         return ResponseEntity.ok().build();
     }
 
+    @CountUserMessage
     @PutMapping(path = "/set-immediate/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> setImmediate(@PathVariable long id) {
         chatService.setImmediate(id);
         return ResponseEntity.ok().build();
     }
 
+    @CountUserMessage
     @PutMapping(path = "/set-digest/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> setDigest(@PathVariable long id) {
         chatService.setDigest(id);
         return ResponseEntity.ok().build();
     }
 
+    @CountUserMessage
     @GetMapping(path = "/links", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ListLinksResponse> getLinks(@RequestHeader("Tg-Chat-Id") long tgChatId) {
         List<LinkResponse> links = chatService.getLinks(tgChatId);
@@ -87,6 +92,7 @@ public class ScrapperController {
         return ResponseEntity.ok().body(linkResponse);
     }
 
+    @CountUserMessage
     @DeleteMapping(
             path = "/links",
             consumes = MediaType.APPLICATION_JSON_VALUE,
