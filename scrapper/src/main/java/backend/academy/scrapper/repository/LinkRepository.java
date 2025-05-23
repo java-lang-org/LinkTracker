@@ -2,6 +2,7 @@ package backend.academy.scrapper.repository;
 
 import backend.academy.scrapper.entity.LinkEntity;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 public interface LinkRepository {
@@ -12,4 +13,6 @@ public interface LinkRepository {
     void updateLastUpdateByUrl(String url, ZonedDateTime lastUpdate);
 
     void deleteUnusedLinks();
+
+    Map<String, Long> countByType();
 }

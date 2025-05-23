@@ -5,7 +5,9 @@ import backend.academy.scrapper.entity.LinkEntity;
 import backend.academy.scrapper.repository.LinkRepository;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.EnumUtils;
 import org.springframework.jdbc.core.RowMapper;
@@ -30,6 +32,11 @@ public class SqlLinkRepository implements LinkRepository {
     private static final String DELETE_UNUSED_SQL =
             """
         DELETE FROM link WHERE NOT EXISTS (SELECT 1 FROM chat_link WHERE chat_link.link_id = link.id)
+    """;
+
+    private static final String COUNT_BY_TYPE =
+            """
+        SELECT type, COUNT(*) AS count FROM link GROUP BY type
     """;
 
     private final JdbcClient jdbcClient;
@@ -76,5 +83,15 @@ public class SqlLinkRepository implements LinkRepository {
     @Transactional
     public void deleteUnusedLinks() {
         jdbcClient.sql(DELETE_UNUSED_SQL).update();
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Long> countByType() {
+        return jdbcClient
+                .sql(COUNT_BY_TYPE)
+                .query((rs, rowNum) -> Map.entry(rs.getString("type"), rs.getLong("count")))
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }

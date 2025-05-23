@@ -1,9 +1,13 @@
 package backend.academy.scrapper.repository.impl;
 
+import backend.academy.scrapper.LinkType;
 import backend.academy.scrapper.entity.LinkEntity;
 import backend.academy.scrapper.repository.LinkRepository;
 import io.lettuce.core.dynamic.annotation.Param;
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -31,4 +35,15 @@ public interface OrmLinkRepository extends LinkRepository, JpaRepository<LinkEnt
     )
 """)
     void deleteUnusedLinks();
+
+    @Transactional
+    @Query("SELECT linkEntity.type, COUNT(linkEntity) FROM LinkEntity linkEntity GROUP BY linkEntity.type")
+    List<Object[]> countByTypeRaw();
+
+    @Override
+    @Transactional
+    default Map<String, Long> countByType() {
+        return countByTypeRaw().stream()
+                .collect(Collectors.toMap(row -> ((LinkType) row[0]).name(), row -> (Long) row[1]));
+    }
 }
