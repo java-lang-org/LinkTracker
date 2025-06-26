@@ -33,6 +33,7 @@ public class BotService {
     @PostConstruct
     public void startBot() {
         try {
+            log.info("Starting bot service at {}", Utils.getCurrentTimestamp());
             registerCommands();
             bot.setUpdatesListener(updates -> {
                 for (Update update : updates) {
@@ -40,29 +41,38 @@ public class BotService {
                 }
                 return UpdatesListener.CONFIRMED_UPDATES_ALL;
             });
+            log.info("Bot service started successfully");
         } catch (Exception e) {
-            log.error("Failed to start bot", e);
+            log.error("Failed to start bot at {}", Utils.getCurrentTimestamp(), e);
         }
     }
 
     @PreDestroy
     public void stopBot() {
+        log.info("Stopping bot service at {}", Utils.getCurrentTimestamp());
         bot.removeGetUpdatesListener();
         executorService.shutdown();
         try {
             if (!executorService.awaitTermination(TIMEOUT_IN_SECONDS, TimeUnit.SECONDS)) {
                 executorService.shutdownNow();
             }
-            log.info("Bot service has been stopped.");
+            log.info("Bot service has been stopped successfully.");
         } catch (InterruptedException e) {
             executorService.shutdownNow();
             Thread.currentThread().interrupt();
-            log.error("Bot service termination was interrupted.");
+            log.error("Bot service termination was interrupted at {}", Utils.getCurrentTimestamp());
         }
     }
 
     public void updates(LinkUpdate linkUpdate) {
+        if (linkUpdate == null || Utils.isNullOrBlank(linkUpdate.url())) {
+            log.warn("Received invalid link update at {}", Utils.getCurrentTimestamp());
+            return;
+        }
+        
         String message = "Link '" + linkUpdate.url() + "' was updated: " + linkUpdate.description();
+        log.info("Sending update notification for URL: {} at {}", linkUpdate.url(), Utils.getCurrentTimestamp());
+        
         for (long chatId : linkUpdate.tgChatIds()) {
             sendMessage(chatId, message);
         }
@@ -84,19 +94,26 @@ public class BotService {
 
             if (update.message().text() == null) {
                 log.info(
-                        "Received a non-text message from chat {}. Ignoring.",
-                        update.message().chat().id());
+                        "Received a non-text message from chat {} at {}. Ignoring.",
+                        update.message().chat().id(), Utils.getCurrentTimestamp());
                 return;
             }
 
             long chatId = update.message().chat().id();
-            String receivedText = update.message().text().trim();
-            log.info("Processing message from {}: {}", chatId, receivedText);
+            String receivedText = Utils.sanitizeInput(update.message().text());
+            
+            if (Utils.isNullOrBlank(receivedText)) {
+                log.warn("Received empty or whitespace-only message from chat {} at {}", 
+                        chatId, Utils.getCurrentTimestamp());
+                return;
+            }
+            
+            log.info("Processing message from {} at {}: {}", chatId, Utils.getCurrentTimestamp(), receivedText);
 
             String response = commandHandler.handle(chatId, receivedText);
             sendMessage(chatId, response);
         } catch (Exception e) {
-            log.error("Error processing update: {}", update, e);
+            log.error("Error processing update at {}: {}", Utils.getCurrentTimestamp(), update, e);
         }
     }
 
